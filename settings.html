@@ -260,6 +260,16 @@
             background-image: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
         }
         /* END: Background Theme Styles */
+
+        /* START: About Developer Modal Text Style */
+        .about-developer-text {
+            font-size: 1.05rem; /* حجم خط أكبر قليلاً */
+            line-height: 1.9; /* تباعد أسطر مريح */
+            text-align: justify; /* محاذاة النص ليعطي شكلاً مرتباً */
+            white-space: pre-wrap; /* للحفاظ على فواصل الأسطر والفقرات */
+            color: var(--secondary-text-color); /* لون نص مريح للعين */
+        }
+        /* END: About Developer Modal Text Style */
     </style>
 </head>
 <body>
@@ -330,6 +340,12 @@
                                 <input class="form-check-input" type="checkbox" role="switch" id="app-lock-switch">
                             </div>
                         </li>
+                        <!-- START: About Developer Button -->
+                        <li class="list-group-item actionable" data-bs-toggle="modal" data-bs-target="#aboutDeveloperModal">
+                            <div><i class="bi bi-info-circle-fill fs-5"></i><span>حول مطور التطبيق</span></div>
+                            <i class="bi bi-chevron-left"></i>
+                        </li>
+                        <!-- END: About Developer Button -->
                          <li class="list-group-item actionable" id="logout-btn" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal">
                             <div><i class="bi bi-box-arrow-right fs-5"></i><span>تسجيل الخروج</span></div>
                             <i class="bi bi-chevron-left"></i>
@@ -414,6 +430,37 @@
         </div>
       </div>
     </div>
+
+    <!-- START: About Developer Modal -->
+    <div class="modal fade" id="aboutDeveloperModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">حول مطور التطبيق</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p class="about-developer-text">
+بسم الله الرحمن الرحيم
+
+الهدف الاساسي من انشاء هذا التطبيق هو ان نكون سندا وعونا حقيقيا لكل شخص قرر بشجاعة ان يبدا صفحة جديدة في حياته ويتخلص من قيود الادمان اللي كبلته لفترة طويلة.
+
+شفنا ولامسنا كيف ان كثير من التطبيقات والمصادر اللي المفروض تكون داعمة في رحلة التعافي تحولت مع الوقت لخدمات تجارية بحتة تتطلب اشتراكات ومبالغ مالية كبيرة وهالشي يشكل عائق كبير قدام ناس كثير امكانياتهم المادية بسيطة او يمكن يكونون في بداية طريقهم وما عندهم القدرة على دفع هالتكاليف ونحن نؤمن ايمان كامل بان المساعدة والدعم النفسي والتحفيزي لازم يكون حق للجميع متاح في كل وقت وبدون اي مقابل او عوائق مادية.
+
+من هذا المنطلق جات فكرة اطلاق هذا التطبيق ليكون بمثابة الرفيق والصديق في رحلة التعافي مساحة آمنة وداعمة ومجانية بشكل كامل مئة بالمئة حاولنا نجمع فيه كل الادوات والمميزات اللي ممكن يحتاجها المتعافي من متابعة ايام التعافي وتحديات تحفيزية ومحتوى ملهم يساعده على الثبات والصمود في وجه اي انتكاسة محتملة ويشجعه على الاستمرار في طريقه نحو حياة افضل واكثر اشراقا وطمانينة.
+
+طموحنا كبير وامنيتنا ان يصل هذا الجهد المتواضع الى اكبر عدد ممكن من الناس في كل مكان وان يكون له اثر ايجابي ملموس في حياتهم وان يكون سببا ولو بسيطا في تغيير مسار حياتهم نحو الافضل والاجمل.
+
+نسال الله العظيم رب العرش العظيم ان يجعل هذا العمل خالصا لوجهه الكريم وان يتقبله منا وان ينفع به كل من حمله واستخدمه وان يثبت كل من يسعى في طريق التعافي ويجزيه خير الجزاء.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- END: About Developer Modal -->
 
     <!-- START: Delete Account Modals -->
     <div class="modal fade" id="deleteAccountModal" tabindex="-1">
