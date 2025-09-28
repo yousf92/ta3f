@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #007bff; /* أزرق بوتستراب كلاسيكي */
+            --primary-color-dark: #0056b3;
+            --secondary-color: #6c757d; /* رمادي بوتستراب */
+            --secondary-color-dark: #5a6268;
+            --danger-color: #dc3545; /* أحمر بوتستراب */
+
+            /* ألوان خلفية مريحة للعين */
+            --background-start: #e0f2f7; /* أزرق فاتح جداً */
+            --background-end: #c2e0e8; /* أزرق مائي فاتح */
+
+            --card-background: rgba(255, 255, 255, 0.2); /* شفاف فاتح للبطاقة */
+            --text-color: #343a40; /* نص داكن لتباين جيد مع الخلفية الفاتحة */
+            --secondary-text-color: #6c757d; /* رمادي متوسط */
+            --border-color: rgba(0, 0, 0, 0.1); /* حدود خفيفة */
+            --input-background: rgba(255, 255, 255, 0.7); /* خلفية حقول الإدخال شبه شفافة */
+            --placeholder-color: #888; /* لون placeholder أغمق */
+        }
+
+        body {
+            font-family: 'Almarai', sans-serif;
+            background: linear-gradient(135deg, var(--background-start), var(--background-end));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text-color);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Decorative circles for background - adjusted for lighter background */
+        .circle {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.05); /* دوائر أغمق قليلاً */
+            border-radius: 50%;
+            filter: blur(40px); /* بلور أقل حدة */
+            animation: float 12s ease-in-out infinite; /* سرعة أبطأ */
+            z-index: 0;
+        }
+        .circle:nth-child(1) { width: 160px; height: 160px; top: 15%; left: 10%; animation-delay: 0s; }
+        .circle:nth-child(2) { width: 220px; height: 220px; bottom: 10%; right: 15%; animation-delay: 4s; }
+        .circle:nth-child(3) { width: 120px; height: 120px; top: 25%; right: 5%; animation-delay: 8s; }
+        .circle:nth-child(4) { width: 190px; height: 190px; bottom: 25%; left: 5%; animation-delay: 2s; }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); } /* حركة أقل */
+            100% { transform: translateY(0px); }
+        }
+
+        .form-container {
+            background: var(--card-background);
+            backdrop-filter: blur(15px) saturate(150%); /* بلور أقل حدة */
+            -webkit-backdrop-filter: blur(15px) saturate(150%);
+            border-radius: 25px;
+            padding: 50px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); /* ظل أخف */
+            border: 1px solid var(--border-color);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .form-container:hover {
+            transform: translateY(-5px) scale(1.005); /* حركة أقل */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            font-family: 'Cairo', sans-serif;
+            color: var(--text-color); /* لون النص الرئيسي */
+            font-weight: 700;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* ظل نص أخف */
+        }
+
+        p {
+            line-height: 1.7;
+            font-size: 0.95em;
+            color: var(--secondary-text-color);
+        }
+
+        .form-label {
+            color: var(--text-color);
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-control {
+            border-radius: 15px;
+            padding: 15px 20px;
+            background: var(--input-background);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            font-size: 1.05em;
+        }
+
+        .form-control::placeholder {
+            color: var(--placeholder-color);
+            opacity: 1;
+        }
+
+        .form-control:focus {
+            background-color: rgba(255, 255, 255, 0.9); /* يصبح أكثر وضوحاً عند التركيز */
+            border-color: var(--primary-color);
+            color: var(--text-color);
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25); /* ظل أزرق فاتح */
+            outline: none;
+        }
+
+        .btn {
+            border-radius: 15px;
+            padding: 15px 25px;
+            font-weight: bold;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            letter-spacing: 0.8px;
+            font-size: 1.05em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color); /* لون ثابت للأزرار الأساسية */
+            color: #FFFFFF;
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-color-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--input-background); /* لون خلفية حقول الإدخال */
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.8); /* يصبح أكثر وضوحاً عند التركيز */
+            color: var(--text-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .text-muted {
+            color: var(--secondary-text-color) !important;
+            font-size: 0.9em;
+        }
+
+        a {
+            color: var(--primary-color); /* الروابط بنفس لون الزر الأساسي */
+            text-decoration: none;
+            transition: color 0.3s ease, text-decoration 0.3s ease;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            color: var(--primary-color-dark);
+        }
+
+        .alert {
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.95em;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            border: none;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .alert-danger {
+            background-color: rgba(220, 53, 69, 0.15); /* أحمر فاتح جداً */
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        .alert-success {
+            background-color: rgba(40, 167, 69, 0.15); /* أخضر فاتح جداً */
+            color: #28a745; /* أخضر بوتستراب */
+            border: 1px solid #28a745;
+        }
+
+        /* Animations for views */
+        .d-none {
+            display: none !important;
+        }
+
+        .view-transition {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .view-transition.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body style="visibility: hidden;">
+    <!-- Decorative circles for background -->
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+
+    <div class="form-container text-center">
+        <!-- Initial View -->
+        <div id="initial-view" class="view-transition active">
+            <h2><i class="fas fa-rocket me-2"></i> أهلاً بك في رحلتك!</h2>
+            <p class="text-muted mb-4">ابدأ الآن وتصفح التطبيق كزائر أو سجل الدخول.</p>
+            <button id="guest-signin-button" class="btn btn-primary w-100 mb-3">
+                <i class="fas fa-user-secret"></i> الدخول كضيف
+            </button>
+            <button id="show-email-login-btn" class="btn btn-secondary w-100">
+                <i class="fas fa-sign-in-alt"></i> لدي حساب بالفعل
+            </button>
+            <p class="mt-4 text-muted">ليس لديك حساب؟ <a href="signup.html">إنشاء حساب جديد <i class="fas fa-arrow-left me-1"></i></a></p>
+        </div>
+
+        <!-- Email Login View (Hidden by default) -->
+        <div id="email-login-view" class="d-none view-transition">
+            <h2><i class="fas fa-user-circle me-2"></i> مرحبا بعودتك!</h2>
+            <p class="text-muted mb-4">سجل الدخول للمتابعة إلى حسابك.</p>
+            <div class="mb-3 text-end">
+                <label for="signin-email" class="form-label">البريد الإلكتروني</label>
+                <input type="email" id="signin-email" class="form-control" required placeholder="example@example.com">
+            </div>
+            <div class="mb-3 text-end">
+                <label for="signin-password" class="form-label">كلمة المرور</label>
+                <input type="password" id="signin-password" class="form-control" required placeholder="********">
+            </div>
+            <!-- START: Forgot Password Link -->
+            <div class="text-start mb-3">
+                <a href="#" id="forgot-password-link"><i class="fas fa-question-circle me-1"></i> نسيت كلمة المرور؟</a>
+            </div>
+            <!-- END: Forgot Password Link -->
+            <button id="signin-button" class="btn btn-primary w-100 mt-3">
+                <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+            </button>
+            <div id="auth-message" class="alert mt-3 d-none"></div>
+            <p class="mt-4 text-muted"><a href="#" id="back-to-initial-view"><i class="fas fa-arrow-right me-1"></i> العودة</a></p>
+        </div>
+        
+        <!-- START: Password Reset View (Hidden by default) -->
+        <div id="reset-password-view" class="d-none view-transition">
+            <h2><i class="fas fa-lock me-2"></i> إعادة تعيين كلمة المرور</h2>
+            <p class="text-muted mb-4">أدخل بريدك الإلكتروني المسجل لإرسال رابط إعادة التعيين.</p>
+            <div class="mb-3 text-end">
+                <label for="reset-email" class="form-label">البريد الإلكتروني</label>
+                <input type="email" id="reset-email" class="form-control" required placeholder="example@example.com">
+            </div>
+            <button id="reset-password-button" class="btn btn-primary w-100 mt-3">
+                <i class="fas fa-paper-plane"></i> إرسال رابط إعادة التعيين
+            </button>
+            <div id="reset-message" class="alert mt-3 d-none"></div>
+            <p class="mt-4 text-muted"><a href="#" id="back-to-login-view"><i class="fas fa-arrow-right me-1"></i> العودة لتسجيل الدخول</a></p>
+        </div>
+        <!-- END: Password Reset View -->
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, onAuthStateChanged, signInAnonymously, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAGgZmhJ_mMezlf7xElisvzJ8l9D758d4g",
+            authDomain: "my-chat-app-daaf8.firebaseapp.com",
+            projectId: "my-chat-app-daaf8",
+            storageBucket: "my-chat-app-daaf8.firebasestorage.app",
+            messagingSenderId: "789086064752",
+            appId: "1:789086064752:web:d081f1b6832dabca1d64b5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const authMessage = document.getElementById('auth-message');
+        const initialView = document.getElementById('initial-view');
+        const emailLoginView = document.getElementById('email-login-view');
+        const showEmailLoginBtn = document.getElementById('show-email-login-btn');
+        const backToInitialViewLink = document.getElementById('back-to-initial-view');
+        
+        const resetPasswordView = document.getElementById('reset-password-view');
+        const forgotPasswordLink = document.getElementById('forgot-password-link');
+        const backToLoginViewLink = document.getElementById('back-to-login-view');
+        const resetPasswordButton = document.getElementById('reset-password-button');
+        const resetMessage = document.getElementById('reset-message');
+
+        function showView(viewToShow) {
+            const views = [initialView, emailLoginView, resetPasswordView];
+            views.forEach(view => {
+                if (view === viewToShow) {
+                    view.classList.remove('d-none');
+                    setTimeout(() => view.classList.add('active'), 10);
+                } else {
+                    view.classList.remove('active');
+                    setTimeout(() => view.classList.add('d-none'), 600); 
+                }
+            });
+        }
+
+        showEmailLoginBtn.addEventListener('click', () => {
+            showView(emailLoginView);
+        });
+
+        backToInitialViewLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showView(initialView);
+            authMessage.classList.add('d-none');
+        });
+
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showView(resetPasswordView);
+            authMessage.classList.add('d-none');
+        });
+
+        backToLoginViewLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showView(emailLoginView);
+            resetMessage.classList.add('d-none');
+        });
+
+        function showAuthMessage(message, isError = true) {
+            authMessage.textContent = message;
+            authMessage.className = `alert mt-3 ${isError ? 'alert-danger' : 'alert-success'} show`;
+            authMessage.classList.remove('d-none');
+        }
+        
+        function showResetMessage(message, isError = true) {
+            resetMessage.textContent = message;
+            resetMessage.className = `alert mt-3 ${isError ? 'alert-danger' : 'alert-success'} show`;
+            resetMessage.classList.remove('d-none');
+        }
+
+        onAuthStateChanged(auth, user => {
+            if (user && (user.emailVerified || user.isAnonymous)) {
+                window.location.href = 'main.html';
+            } else {
+                document.body.style.visibility = 'visible';
+                initialView.classList.add('active');
+            }
+        });
+
+        const signinButton = document.getElementById('signin-button');
+        signinButton.addEventListener('click', () => {
+            const email = document.getElementById('signin-email').value.trim();
+            const password = document.getElementById('signin-password').value.trim();
+            if (!email || !password) {
+                return showAuthMessage("الرجاء إدخال البريد الإلكتروني وكلمة المرور.");
+            }
+            signinButton.disabled = true;
+            signinButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري تسجيل الدخول...';
+
+            setPersistence(auth, browserLocalPersistence)
+                .then(() => {
+                    return signInWithEmailAndPassword(auth, email, password);
+                })
+                .then(userCredential => {
+                    if (!userCredential.user.emailVerified) {
+                        showAuthMessage("لم يتم التحقق من بريدك الإلكتروني. الرجاء التحقق من صندوق الوارد الخاص بك.");
+                        signinButton.disabled = false;
+                        signinButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+                    }
+                })
+                .catch(error => {
+                    console.error("Sign-in or persistence failed:", error);
+                    showAuthMessage("خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+                    signinButton.disabled = false;
+                    signinButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+                });
+        });
+
+        const guestSigninButton = document.getElementById('guest-signin-button');
+        guestSigninButton.addEventListener('click', () => {
+            guestSigninButton.disabled = true;
+            guestSigninButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الدخول كضيف...';
+            
+            setPersistence(auth, browserLocalPersistence)
+                .then(() => {
+                    return signInAnonymously(auth);
+                })
+                .catch((error) => {
+                    console.error("Anonymous sign-in or persistence failed:", error);
+                    showAuthMessage("حدث خطأ أثناء تسجيل الدخول كضيف. الرجاء المحاولة مرة أخرى.");
+                    guestSigninButton.disabled = false;
+                    guestSigninButton.innerHTML = '<i class="fas fa-user-secret"></i> الدخول كضيف';
+                });
+        });
+
+        resetPasswordButton.addEventListener('click', () => {
+            const email = document.getElementById('reset-email').value.trim();
+            if (!email) {
+                return showResetMessage("الرجاء إدخال بريدك الإلكتروني.");
+            }
+            resetPasswordButton.disabled = true;
+            resetPasswordButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الإرسال...';
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    showResetMessage("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد (وقد تجده في البريد العشوائي spam).", false);
+                    resetPasswordButton.disabled = false;
+                    resetPasswordButton.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال رابط إعادة التعيين';
+                })
+                .catch((error) => {
+                    showResetMessage("حدث خطأ: لم يتم العثور على حساب بهذا البريد الإلكتروني. الرجاء التأكد من صحة البريد الإلكتروني.");
+                    resetPasswordButton.disabled = false;
+                    resetPasswordButton.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال رابط إعادة التعيين';
+                });
+        });
+
+    </script>
+
+</body>
+</html>
