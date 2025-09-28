@@ -1,3 +1,19 @@
+// --- START: Added Spinner Functions ---
+function showSpinner() {
+    const spinner = document.getElementById('loading-spinner-overlay');
+    if (spinner) {
+        spinner.classList.add('show');
+    }
+}
+
+function hideSpinner() {
+    const spinner = document.getElementById('loading-spinner-overlay');
+    if (spinner) {
+        spinner.classList.remove('show');
+    }
+}
+// --- END: Added Spinner Functions ---
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, arrayUnion, updateDoc, deleteDoc, limit, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -47,8 +63,9 @@ const congratsModal = new bootstrap.Modal(congratsModalEl);
 async function resetAchievements() {
     const user = auth.currentUser;
     if (!user || user.isAnonymous) return;
-    const achievementsColRef = collection(db, "users", user.uid, "achievements");
+    showSpinner();
     try {
+        const achievementsColRef = collection(db, "users", user.uid, "achievements");
         const querySnapshot = await getDocs(achievementsColRef);
         const deletePromises = [];
         querySnapshot.forEach((doc) => {
@@ -57,35 +74,42 @@ async function resetAchievements() {
         await Promise.all(deletePromises);
     } catch (error) {
         console.error("Error resetting achievements:", error);
+    } finally {
+        hideSpinner();
     }
 }
 
 async function checkAndAwardAchievements(days) {
     const user = auth.currentUser;
     if (!user || user.isAnonymous || days < 1) return;
-    for (const milestone of milestones) {
-        if (days >= milestone.days) {
-            const achievementRef = doc(db, "users", user.uid, "achievements", String(milestone.days));
-            try {
-                const achievementSnap = await getDoc(achievementRef);
-                if (!achievementSnap.exists()) {
-                    await setDoc(achievementRef, {
-                        name: milestone.name,
-                        icon: milestone.icon,
-                        dateAwarded: serverTimestamp()
-                    });
-                    const userName = user.displayName || 'يا بطل';
-                    document.getElementById('congrats-user-text').textContent = `مبارك يا ${userName}!`;
-                    document.getElementById('congrats-text').textContent = `لقد حصلت على "${milestone.name}"`;
-                    document.getElementById('congrats-icon').innerHTML = `<i class="${milestone.icon}"></i>`;
-                    congratsModal.show();
+    showSpinner();
+    try {
+        for (const milestone of milestones) {
+            if (days >= milestone.days) {
+                const achievementRef = doc(db, "users", user.uid, "achievements", String(milestone.days));
+                try {
+                    const achievementSnap = await getDoc(achievementRef);
+                    if (!achievementSnap.exists()) {
+                        await setDoc(achievementRef, {
+                            name: milestone.name,
+                            icon: milestone.icon,
+                            dateAwarded: serverTimestamp()
+                        });
+                        const userName = user.displayName || 'يا بطل';
+                        document.getElementById('congrats-user-text').textContent = `مبارك يا ${userName}!`;
+                        document.getElementById('congrats-text').textContent = `لقد حصلت على "${milestone.name}"`;
+                        document.getElementById('congrats-icon').innerHTML = `<i class="${milestone.icon}"></i>`;
+                        congratsModal.show();
+                    }
+                } catch (error) {
+                    console.error(`Error checking achievement for ${milestone.days} days:`, error);
                 }
-            } catch (error) {
-                console.error(`Error checking achievement for ${milestone.days} days:`, error);
+            } else {
+                break; 
             }
-        } else {
-            break; 
         }
+    } finally {
+        hideSpinner();
     }
 }
 
@@ -136,7 +160,7 @@ function getUTCDayStart(date) {
 async function displayBannedList() {
     const bannedListBody = document.getElementById('banned-list-pane');
     bannedListBody.innerHTML = `<div class="loading-spinner-container"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
-
+    showSpinner();
     try {
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("isBannedFromLeaderboard", "==", true));
@@ -169,11 +193,13 @@ async function displayBannedList() {
             button.addEventListener('click', async (event) => {
                 const userIdToRestore = event.target.dataset.userid;
                 if (confirm('هل أنت متأكد من إلغاء حظر هذا المستخدم؟')) {
+                    showSpinner();
                     try {
                         const userToUpdateRef = doc(db, "users", userIdToRestore);
                         await updateDoc(userToUpdateRef, { isBannedFromLeaderboard: false });
                         event.target.closest('.leaderboard-item').remove();
                     } catch (error) { console.error("Error unbanning user: ", error); }
+                    finally { hideSpinner(); }
                 }
             });
         });
@@ -181,6 +207,8 @@ async function displayBannedList() {
     } catch (error) {
         console.error("Error fetching banned list: ", error);
         bannedListBody.innerHTML = '<p class="text-center text-danger mt-3">حدث خطأ أثناء تحميل القائمة.</p>';
+    } finally {
+        hideSpinner();
     }
 }
 
@@ -198,6 +226,7 @@ async function displayLeaderboard() {
     
     let allRankedUsers = [];
 
+    showSpinner();
     try {
         let currentUserRole = 'user';
         const currentUserDoc = await getDoc(doc(db, "users", user.uid));
@@ -274,11 +303,13 @@ async function displayLeaderboard() {
                     event.stopPropagation(); // Prevent modal from opening
                     const userIdToBan = event.target.dataset.userid;
                     if (confirm("هل أنت متأكد من حظر هذا المستخدم من لوحة الصدارة؟")) {
+                        showSpinner();
                         try {
                             const userToUpdateRef = doc(db, "users", userIdToBan);
                             await updateDoc(userToUpdateRef, { isBannedFromLeaderboard: true });
                             event.target.closest('.leaderboard-item').remove();
                         } catch (error) { console.error("Error banning user: ", error); }
+                        finally { hideSpinner(); }
                     }
                 });
             });
@@ -306,6 +337,8 @@ async function displayLeaderboard() {
         console.error("Error fetching leaderboard: ", error);
         leaderboardListPane.innerHTML = '<p class="text-center text-danger mt-3">حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.</p>';
         leaderboardFooter.innerHTML = 'خطأ في تحميل الترتيب';
+    } finally {
+        hideSpinner();
     }
 }
 // END: Leaderboard Logic
@@ -314,7 +347,7 @@ async function displayLeaderboard() {
 async function displayUserAchievements(userId) {
     const grid = document.getElementById('user-achievements-grid');
     grid.innerHTML = `<div class="loading-spinner-container w-100 d-flex justify-content-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
-
+    showSpinner();
     try {
         const achievementsRef = collection(db, "users", userId, "achievements");
         const q = query(achievementsRef, orderBy("dateAwarded", "desc"));
@@ -343,6 +376,8 @@ async function displayUserAchievements(userId) {
     } catch (error) {
         console.error("Error fetching user achievements:", error);
         grid.innerHTML = '<p class="text-center text-danger mt-3 w-100" style="grid-column: 1 / -1;">حدث خطأ أثناء تحميل الأوسمة.</p>';
+    } finally {
+        hideSpinner();
     }
 }
 // END: User Achievements Modal Logic
@@ -505,6 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function callGeminiAPI(prompt) {
+        showSpinner();
         return new Promise((resolve, reject) => {
             const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyYn_lPlFg25E8QTJQGie4ams49eYQekl-qZ9mm9oB4BkLyBtuTS2ZX9pw6D5mfj1Io/exec";
             const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
@@ -516,6 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     resolve(data.text);
                 }
+                hideSpinner();
             };
             const script = document.createElement('script');
             script.src = WEB_APP_URL + '?callback=' + callbackName + '&prompt=' + encodeURIComponent(prompt);
@@ -523,6 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 delete window[callbackName];
                 document.body.removeChild(script);
                 resolve("إذا أردت إرسال طلب آخر اضغط على أيقونة الرئيسية في الشريط السفلي");
+                hideSpinner();
             };
             document.body.appendChild(script);
         });
@@ -593,132 +631,152 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     onAuthStateChanged(auth, async (user) => {
-        if (user && (user.emailVerified || user.isAnonymous)) {
-            document.body.style.visibility = 'visible';
-            initializeAppLock();
+        showSpinner();
+        try {
+            if (user && (user.emailVerified || user.isAnonymous)) {
+                document.body.style.visibility = 'visible';
+                initializeAppLock();
 
-            setInterval(() => { if (document.visibilityState === 'visible') localStorage.setItem('app_last_unlock', Date.now()); }, 60 * 1000); 
-            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') initializeAppLock(); });
-            
-            initializeGlobalChatNotifications(user.uid);
-            listenForBackgroundImageChanges();
+                setInterval(() => { if (document.visibilityState === 'visible') localStorage.setItem('app_last_unlock', Date.now()); }, 60 * 1000); 
+                document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') initializeAppLock(); });
+                
+                initializeGlobalChatNotifications(user.uid);
+                listenForBackgroundImageChanges();
 
-            if (user.isAnonymous) {
-                welcomeUserEl.textContent = `مرحبا ٲيها الزائر`;
-                openSendModalBtn.classList.add('d-none');
-                const visitorTimerStart = localStorage.getItem('visitorTimerStart');
-                if (visitorTimerStart) {
-                    startTime = new Date(parseInt(visitorTimerStart));
-                    startTimerBtn.classList.add('d-none');
-                    timerSettingsIcon.classList.remove('d-none');
-                    updateTimer();
-                    if(timerInterval) clearInterval(timerInterval);
-                    timerInterval = setInterval(updateTimer, 1000);
-                } else {
-                    startTimerBtn.classList.remove('d-none');
-                    timerSettingsIcon.classList.add('d-none');
-                    updateTimerDisplay(0, 0, 0, 0);
-                }
-                loadNotifications(null);
-                initializeModalListeners();
-            } else {
-                welcomeUserEl.textContent = `مرحبا ${user.displayName || 'المستخدم'}`;
-                const userDocRef = doc(db, "users", user.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    currentUserRole = userDoc.data().role || 'user';
-                    if (currentUserRole === 'developer') { 
-                        openSendModalBtn.classList.remove('d-none'); 
-                        document.getElementById('developer-background-options').classList.remove('d-none');
-                    }
-                    if (userDoc.data().timerStartDate) {
-                        startTime = userDoc.data().timerStartDate.toDate();
-                        startTimerBtn.classList.add('d-none'); 
-                        timerSettingsIcon.classList.remove('d-none'); 
+                if (user.isAnonymous) {
+                    welcomeUserEl.textContent = `مرحبا ٲيها الزائر`;
+                    openSendModalBtn.classList.add('d-none');
+                    const visitorTimerStart = localStorage.getItem('visitorTimerStart');
+                    if (visitorTimerStart) {
+                        startTime = new Date(parseInt(visitorTimerStart));
+                        startTimerBtn.classList.add('d-none');
+                        timerSettingsIcon.classList.remove('d-none');
                         updateTimer();
-                        if (timerInterval) clearInterval(timerInterval);
+                        if(timerInterval) clearInterval(timerInterval);
                         timerInterval = setInterval(updateTimer, 1000);
                     } else {
-                        startTimerBtn.classList.remove('d-none'); 
-                        timerSettingsIcon.classList.add('d-none'); 
-                        updateTimerDisplay(0,0,0,0); 
+                        startTimerBtn.classList.remove('d-none');
+                        timerSettingsIcon.classList.add('d-none');
+                        updateTimerDisplay(0, 0, 0, 0);
                     }
+                    loadNotifications(null);
+                    initializeModalListeners();
                 } else {
-                    await setDoc(userDocRef, { role: 'user', lastSeenNotificationTimestamp: new Date(0), displayName: user.displayName, photoURL: user.photoURL }, { merge: true });
-                    startTimerBtn.classList.remove('d-none');
-                    timerSettingsIcon.classList.add('d-none');
-                    updateTimerDisplay(0,0,0,0);
+                    welcomeUserEl.textContent = `مرحبا ${user.displayName || 'المستخدم'}`;
+                    const userDocRef = doc(db, "users", user.uid);
+                    const userDoc = await getDoc(userDocRef);
+                    if (userDoc.exists()) {
+                        currentUserRole = userDoc.data().role || 'user';
+                        if (currentUserRole === 'developer') { 
+                            openSendModalBtn.classList.remove('d-none'); 
+                            document.getElementById('developer-background-options').classList.remove('d-none');
+                        }
+                        if (userDoc.data().timerStartDate) {
+                            startTime = userDoc.data().timerStartDate.toDate();
+                            startTimerBtn.classList.add('d-none'); 
+                            timerSettingsIcon.classList.remove('d-none'); 
+                            updateTimer();
+                            if (timerInterval) clearInterval(timerInterval);
+                            timerInterval = setInterval(updateTimer, 1000);
+                        } else {
+                            startTimerBtn.classList.remove('d-none'); 
+                            timerSettingsIcon.classList.add('d-none'); 
+                            updateTimerDisplay(0,0,0,0); 
+                        }
+                    } else {
+                        await setDoc(userDocRef, { role: 'user', lastSeenNotificationTimestamp: new Date(0), displayName: user.displayName, photoURL: user.photoURL }, { merge: true });
+                        startTimerBtn.classList.remove('d-none');
+                        timerSettingsIcon.classList.add('d-none');
+                        updateTimerDisplay(0,0,0,0);
+                    }
+                    loadNotifications(user.uid);
+                    initializeModalListeners();
                 }
-                loadNotifications(user.uid);
-                initializeModalListeners();
+            } else {
+                window.location.href = 'index.html';
             }
-        } else {
-            window.location.href = 'index.html';
+        } finally {
+            hideSpinner();
         }
     });
 
     startTimerBtn.addEventListener('click', async () => {
         const user = auth.currentUser;
         startTime = new Date();
-        if (user && !user.isAnonymous) {
-            const userDocRef = doc(db, "users", user.uid);
-            await setDoc(userDocRef, { timerStartDate: startTime }, { merge: true });
-        } else {
-            localStorage.setItem('visitorTimerStart', startTime.getTime());
+        showSpinner();
+        try {
+            if (user && !user.isAnonymous) {
+                const userDocRef = doc(db, "users", user.uid);
+                await setDoc(userDocRef, { timerStartDate: startTime }, { merge: true });
+            } else {
+                localStorage.setItem('visitorTimerStart', startTime.getTime());
+            }
+            startTimerBtn.classList.add('d-none');
+            timerSettingsIcon.classList.remove('d-none');
+            updateTimer();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+        } finally {
+            hideSpinner();
         }
-        startTimerBtn.classList.add('d-none');
-        timerSettingsIcon.classList.remove('d-none');
-        updateTimer();
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(updateTimer, 1000);
     });
 
     async function loadNotifications(userId) {
         const notificationsList = document.getElementById('notifications-list');
         let lastSeenTimestamp = new Date(0);
 
-        if (userId) {
-            const userDoc = await getDoc(doc(db, "users", userId));
-            lastSeenTimestamp = userDoc.data()?.lastSeenNotificationTimestamp?.toDate() || new Date(0);
-        }
-
-        const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
-        onSnapshot(q, (snapshot) => {
-            notificationsList.innerHTML = "";
-            if (snapshot.empty) {
-                notificationsList.innerHTML = '<p class="text-center text-muted">لا توجد إشعارات حالياً.</p>';
-                notificationBadge.style.display = 'none';
-                return;
-            }
-
+        showSpinner();
+        try {
             if (userId) {
-                latestNotificationTimestamp = snapshot.docs[0].data().createdAt?.toDate();
-                notificationBadge.style.display = latestNotificationTimestamp > lastSeenTimestamp ? 'block' : 'none';
-            } else {
-                 notificationBadge.style.display = 'none';
+                const userDoc = await getDoc(doc(db, "users", userId));
+                lastSeenTimestamp = userDoc.data()?.lastSeenNotificationTimestamp?.toDate() || new Date(0);
             }
 
-            snapshot.forEach(docSnapshot => {
-                const notification = docSnapshot.data();
-                const date = notification.createdAt?.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) || '';
-                const item = document.createElement('div');
-                item.className = 'notification-item';
-                const deleteIconHTML = (currentUserRole === 'developer' && userId) ? `<i class="bi bi-trash delete-notification-btn" data-id="${docSnapshot.id}" style="display: inline-block;"></i>` : '';
-                item.innerHTML = `${deleteIconHTML}<div class="d-flex justify-content-between align-items-center"><h6 class="notification-title mb-1">${notification.title}</h6><span class="notification-date">${date}</span></div><p class="notification-body mb-0">${notification.message}</p>`;
-                notificationsList.appendChild(item);
-            });
+            const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                notificationsList.innerHTML = "";
+                if (snapshot.empty) {
+                    notificationsList.innerHTML = '<p class="text-center text-muted">لا توجد إشعارات حالياً.</p>';
+                    notificationBadge.style.display = 'none';
+                    return;
+                }
 
-            if (currentUserRole === 'developer' && userId) {
-                document.querySelectorAll('.delete-notification-btn').forEach(button => {
-                    button.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        if (confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
-                            await deleteDoc(doc(db, "notifications", e.target.getAttribute('data-id')));
-                        }
-                    });
+                if (userId) {
+                    latestNotificationTimestamp = snapshot.docs[0].data().createdAt?.toDate();
+                    notificationBadge.style.display = latestNotificationTimestamp > lastSeenTimestamp ? 'block' : 'none';
+                } else {
+                    notificationBadge.style.display = 'none';
+                }
+
+                snapshot.forEach(docSnapshot => {
+                    const notification = docSnapshot.data();
+                    const date = notification.createdAt?.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) || '';
+                    const item = document.createElement('div');
+                    item.className = 'notification-item';
+                    const deleteIconHTML = (currentUserRole === 'developer' && userId) ? `<i class="bi bi-trash delete-notification-btn" data-id="${docSnapshot.id}" style="display: inline-block;"></i>` : '';
+                    item.innerHTML = `${deleteIconHTML}<div class="d-flex justify-content-between align-items-center"><h6 class="notification-title mb-1">${notification.title}</h6><span class="notification-date">${date}</span></div><p class="notification-body mb-0">${notification.message}</p>`;
+                    notificationsList.appendChild(item);
                 });
-            }
-        });
+
+                if (currentUserRole === 'developer' && userId) {
+                    document.querySelectorAll('.delete-notification-btn').forEach(button => {
+                        button.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            if (confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
+                                showSpinner();
+                                try {
+                                    await deleteDoc(doc(db, "notifications", e.target.getAttribute('data-id')));
+                                } finally {
+                                    hideSpinner();
+                                }
+                            }
+                        });
+                    });
+                }
+            });
+        } finally {
+            hideSpinner();
+        }
     }
 
     notificationsModalEl.addEventListener('show.bs.modal', async () => {
@@ -734,10 +792,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = document.getElementById('notification-title').value.trim();
         const message = document.getElementById('notification-message').value.trim();
         if (!title || !message) return;
-        await addDoc(collection(db, "notifications"), { title, message, createdAt: serverTimestamp() });
-        document.getElementById('notification-title').value = '';
-        document.getElementById('notification-message').value = '';
-        sendNotificationModal.hide();
+        showSpinner();
+        try {
+            await addDoc(collection(db, "notifications"), { title, message, createdAt: serverTimestamp() });
+            document.getElementById('notification-title').value = '';
+            document.getElementById('notification-message').value = '';
+            sendNotificationModal.hide();
+        } finally {
+            hideSpinner();
+        }
     });
 
     const dateElement = document.getElementById('current-date');
@@ -783,14 +846,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const newStartTime = new Date(e.target.value);
         if (isNaN(newStartTime.getTime())) return;
         
-        const user = auth.currentUser;
-        if (user && !user.isAnonymous) {
-            await resetAchievements();
-            await setDoc(doc(db, "users", user.uid), { timerStartDate: newStartTime }, { merge: true });
-        } else {
-             localStorage.setItem('visitorTimerStart', newStartTime.getTime());
+        showSpinner();
+        try {
+            const user = auth.currentUser;
+            if (user && !user.isAnonymous) {
+                await resetAchievements();
+                await setDoc(doc(db, "users", user.uid), { timerStartDate: newStartTime }, { merge: true });
+            } else {
+                localStorage.setItem('visitorTimerStart', newStartTime.getTime());
+            }
+            location.reload();
+        } finally {
+            hideSpinner();
         }
-        location.reload();
     });
 
     document.getElementById('reset-timer-button').addEventListener('click', () => { closeSettingsModal(); setTimeout(() => confirmResetModal.classList.add('show'), 300); });
@@ -798,15 +866,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cancel-reset-button').addEventListener('click', closeConfirmModal);
     
     document.getElementById('confirm-reset-action-button').addEventListener('click', async () => {
-        const user = auth.currentUser;
-        if (user && !user.isAnonymous) await resetAchievements(); 
-        const newStartTime = new Date();
-        if (user && !user.isAnonymous) {
-            await setDoc(doc(db, "users", user.uid), { timerStartDate: newStartTime }, { merge: true });
-        } else {
-            localStorage.setItem('visitorTimerStart', newStartTime.getTime());
+        showSpinner();
+        try {
+            const user = auth.currentUser;
+            if (user && !user.isAnonymous) await resetAchievements(); 
+            const newStartTime = new Date();
+            if (user && !user.isAnonymous) {
+                await setDoc(doc(db, "users", user.uid), { timerStartDate: newStartTime }, { merge: true });
+            } else {
+                localStorage.setItem('visitorTimerStart', newStartTime.getTime());
+            }
+            location.reload();
+        } finally {
+            hideSpinner();
         }
-        location.reload();
     });
 
 
@@ -900,6 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('file', file);
         formData.append('upload_preset', 'back photo');
         formData.append('folder', 'back photo'); 
+        showSpinner();
         try {
             setImageButton.innerHTML = `<span>جاري الرفع...</span>`;
             setImageButton.disabled = true;
@@ -910,11 +984,17 @@ document.addEventListener('DOMContentLoaded', () => {
         finally {
              setImageButton.innerHTML = `<span>تعيين صورة خلفية</span><div class="icon-container green"><i class="bi bi-image"></i></div>`;
              setImageButton.disabled = false;
+             hideSpinner();
         }
     }
     
     async function updateBackgroundImageInFirestore(url) {
-        await setDoc(doc(db, "app_config", "background_image"), { url: url }, { merge: true });
+        showSpinner();
+        try {
+            await setDoc(doc(db, "app_config", "background_image"), { url: url }, { merge: true });
+        } finally {
+            hideSpinner();
+        }
     }
 
     setImageButton.addEventListener('click', () => imageFilePicker.click());
@@ -986,61 +1066,75 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to load data based on user auth state
     const loadCommitmentData = async () => {
         const user = auth.currentUser;
-
-        if (user && !user.isAnonymous) {
-            // Registered user: use Firestore
-            const docRef = doc(db, "users", user.uid, "commitment", "document");
-            try {
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
+        showSpinner();
+        try {
+            if (user && !user.isAnonymous) {
+                // Registered user: use Firestore
+                const docRef = doc(db, "users", user.uid, "commitment", "document");
+                try {
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        populateDocument(data);
+                        if(userSignatureEl) userSignatureEl.textContent = user.displayName || 'مستخدم';
+                        showCommitmentPage('document-page');
+                    } else {
+                        showCommitmentPage('form-page');
+                    }
+                } catch (error) {
+                    console.error("Error getting commitment document from Firestore:", error);
+                    showCommitmentPage('form-page'); // Fallback to form on error
+                }
+            } else {
+                // Anonymous user: use localStorage
+                const savedData = localStorage.getItem('commitmentDocument');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
                     populateDocument(data);
-                    if(userSignatureEl) userSignatureEl.textContent = user.displayName || 'مستخدم';
+                    if(userSignatureEl) userSignatureEl.textContent = 'زائر';
                     showCommitmentPage('document-page');
                 } else {
                     showCommitmentPage('form-page');
                 }
-            } catch (error) {
-                console.error("Error getting commitment document from Firestore:", error);
-                showCommitmentPage('form-page'); // Fallback to form on error
             }
-        } else {
-            // Anonymous user: use localStorage
-            const savedData = localStorage.getItem('commitmentDocument');
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                populateDocument(data);
-                if(userSignatureEl) userSignatureEl.textContent = 'زائر';
-                showCommitmentPage('document-page');
-            } else {
-                showCommitmentPage('form-page');
-            }
+        } finally {
+            hideSpinner();
         }
     };
 
     // Function to save data based on user auth state
     const saveCommitmentData = async (data) => {
         const user = auth.currentUser;
-        if (user && !user.isAnonymous) {
-            // Registered user: save to Firestore
-            const docRef = doc(db, "users", user.uid, "commitment", "document");
-            await setDoc(docRef, data);
-        } else {
-            // Anonymous user: save to localStorage
-            localStorage.setItem('commitmentDocument', JSON.stringify(data));
+        showSpinner();
+        try {
+            if (user && !user.isAnonymous) {
+                // Registered user: save to Firestore
+                const docRef = doc(db, "users", user.uid, "commitment", "document");
+                await setDoc(docRef, data);
+            } else {
+                // Anonymous user: save to localStorage
+                localStorage.setItem('commitmentDocument', JSON.stringify(data));
+            }
+        } finally {
+            hideSpinner();
         }
     };
 
     // Function to delete data based on user auth state
     const deleteCommitmentData = async () => {
         const user = auth.currentUser;
-        if (user && !user.isAnonymous) {
-            // Registered user: delete from Firestore
-            const docRef = doc(db, "users", user.uid, "commitment", "document");
-            await deleteDoc(docRef);
-        } else {
-            // Anonymous user: delete from localStorage
-            localStorage.removeItem('commitmentDocument');
+        showSpinner();
+        try {
+            if (user && !user.isAnonymous) {
+                // Registered user: delete from Firestore
+                const docRef = doc(db, "users", user.uid, "commitment", "document");
+                await deleteDoc(docRef);
+            } else {
+                // Anonymous user: delete from localStorage
+                localStorage.removeItem('commitmentDocument');
+            }
+        } finally {
+            hideSpinner();
         }
     };
 
@@ -1067,20 +1161,25 @@ document.addEventListener('DOMContentLoaded', () => {
     editBtn.addEventListener('click', async () => {
         const user = auth.currentUser;
         let data;
-        if (user && !user.isAnonymous) {
-            const docRef = doc(db, "users", user.uid, "commitment", "document");
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                data = docSnap.data();
+        showSpinner();
+        try {
+            if (user && !user.isAnonymous) {
+                const docRef = doc(db, "users", user.uid, "commitment", "document");
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    data = docSnap.data();
+                }
+            } else {
+                const savedData = localStorage.getItem('commitmentDocument');
+                if (savedData) data = JSON.parse(savedData);
             }
-        } else {
-            const savedData = localStorage.getItem('commitmentDocument');
-            if (savedData) data = JSON.parse(savedData);
-        }
 
-        if (data) {
-            populateEditForm(data);
-            showCommitmentPage('edit-page');
+            if (data) {
+                populateEditForm(data);
+                showCommitmentPage('edit-page');
+            }
+        } finally {
+            hideSpinner();
         }
     });
 

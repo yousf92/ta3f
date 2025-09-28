@@ -1,3 +1,19 @@
+// --- START: Added Spinner Functions ---
+function showSpinner() {
+    const spinner = document.getElementById('loading-spinner-overlay');
+    if (spinner) {
+        spinner.classList.add('show');
+    }
+}
+
+function hideSpinner() {
+    const spinner = document.getElementById('loading-spinner-overlay');
+    if (spinner) {
+        spinner.classList.remove('show');
+    }
+}
+// --- END: Added Spinner Functions ---
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -125,6 +141,7 @@ passcodeInput.addEventListener('keyup', (event) => {
 });
 
 function callGeminiAPI(prompt) {
+    showSpinner();
     return new Promise((resolve, reject) => {
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw5WTzuAoDYaqGGrgVFUheHZmTtpo9n5fYw1fI-nkNuUV6VYjHt1n6cloK74oE2c1aaVQ/exec";
         
@@ -139,6 +156,7 @@ function callGeminiAPI(prompt) {
             } else {
                 resolve(data.text);
             }
+            hideSpinner();
         };
 
         const script = document.createElement('script');
@@ -148,6 +166,7 @@ function callGeminiAPI(prompt) {
             delete window[callbackName];
             document.body.removeChild(script);
             resolve("  إذا أردت إرسال طلب آخر اضغط على أيقونة المتابعة في الشريط السفلي  .");
+            hideSpinner();
         };
 
         document.body.appendChild(script);
@@ -197,30 +216,40 @@ const contextualResultText = document.getElementById('contextual-gemini-result-t
 let currentDate = new Date();
 
 async function getHabitData() {
-    if (isVisitor) {
-        try {
-            const localData = localStorage.getItem('visitorHabitData');
-            userHabitData = localData ? JSON.parse(localData) : {};
-        } catch (e) { userHabitData = {}; }
-    } else {
-        if (!currentUserId) return {};
-        const userDocRef = doc(db, "users", currentUserId);
-        const docSnap = await getDoc(userDocRef);
-        userHabitData = (docSnap.exists() && docSnap.data().habitData) ? docSnap.data().habitData : {};
+    showSpinner();
+    try {
+        if (isVisitor) {
+            try {
+                const localData = localStorage.getItem('visitorHabitData');
+                userHabitData = localData ? JSON.parse(localData) : {};
+            } catch (e) { userHabitData = {}; }
+        } else {
+            if (!currentUserId) return {};
+            const userDocRef = doc(db, "users", currentUserId);
+            const docSnap = await getDoc(userDocRef);
+            userHabitData = (docSnap.exists() && docSnap.data().habitData) ? docSnap.data().habitData : {};
+        }
+    } finally {
+        hideSpinner();
     }
     return userHabitData;
 }
 
 async function saveHabitData(data) {
     userHabitData = data;
-    if (isVisitor) {
-        localStorage.setItem('visitorHabitData', JSON.stringify(data));
-    } else {
-        if (!currentUserId) return;
-        const userDocRef = doc(db, "users", currentUserId);
-        try {
-            await setDoc(userDocRef, { habitData: data }, { merge: true });
-        } catch (error) { console.error("Error saving habit data: ", error); }
+    showSpinner();
+    try {
+        if (isVisitor) {
+            localStorage.setItem('visitorHabitData', JSON.stringify(data));
+        } else {
+            if (!currentUserId) return;
+            const userDocRef = doc(db, "users", currentUserId);
+            try {
+                await setDoc(userDocRef, { habitData: data }, { merge: true });
+            } catch (error) { console.error("Error saving habit data: ", error); }
+        }
+    } finally {
+        hideSpinner();
     }
 }
 

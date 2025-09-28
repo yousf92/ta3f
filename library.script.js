@@ -1,3 +1,19 @@
+// --- START: Added Spinner Functions ---
+function showSpinner() {
+    const spinner = document.getElementById('loading-spinner-overlay');
+    if (spinner) {
+        spinner.classList.add('show');
+    }
+}
+
+function hideSpinner() {
+    const spinner = document.getElementById('loading-spinner-overlay');
+    if (spinner) {
+        spinner.classList.remove('show');
+    }
+}
+// --- END: Added Spinner Functions ---
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, updateDoc, deleteDoc, getDoc, setDoc, where, orderBy, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -206,48 +222,53 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 onAuthStateChanged(auth, async (user) => {
-    initializeAppLock();
-    setInterval(() => {
-        if (document.visibilityState === 'visible') {
-            localStorage.setItem('app_last_unlock', Date.now());
-        }
-    }, 60 * 1000);
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            initializeAppLock();
-        }
-    });
-    if (!user) {
-        try {
-            currentUser = (await signInAnonymously(auth)).user;
-        } catch (error) { console.error("Anonymous sign in failed:", error); return; }
-    } else {
-         currentUser = user; 
-    }
-    
-    initializeGlobalChatNotifications(currentUser.uid);
-    
-    const isDeveloper = currentUser.uid === DEVELOPER_UID;
-    document.querySelector('.fab').style.display = isDeveloper ? 'flex' : 'none';
-    document.getElementById('add-section-btn').style.display = isDeveloper ? 'block' : 'none';
-    
-    const viewToggle = document.getElementById('developer-view-toggle');
-    if (isDeveloper) {
-        document.getElementById('library-title').classList.add('d-none');
-        viewToggle.classList.remove('d-none');
-        viewToggle.addEventListener('click', (e) => {
-            if (e.target.matches('button')) {
-                const view = e.target.dataset.view;
-                if (view !== currentView) {
-                    switchView(view);
-                }
+    showSpinner();
+    try {
+        initializeAppLock();
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                localStorage.setItem('app_last_unlock', Date.now());
+            }
+        }, 60 * 1000);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                initializeAppLock();
             }
         });
+        if (!user) {
+            try {
+                currentUser = (await signInAnonymously(auth)).user;
+            } catch (error) { console.error("Anonymous sign in failed:", error); return; }
+        } else {
+            currentUser = user; 
+        }
+        
+        initializeGlobalChatNotifications(currentUser.uid);
+        
+        const isDeveloper = currentUser.uid === DEVELOPER_UID;
+        document.querySelector('.fab').style.display = isDeveloper ? 'flex' : 'none';
+        document.getElementById('add-section-btn').style.display = isDeveloper ? 'block' : 'none';
+        
+        const viewToggle = document.getElementById('developer-view-toggle');
+        if (isDeveloper) {
+            document.getElementById('library-title').classList.add('d-none');
+            viewToggle.classList.remove('d-none');
+            viewToggle.addEventListener('click', (e) => {
+                if (e.target.matches('button')) {
+                    const view = e.target.dataset.view;
+                    if (view !== currentView) {
+                        switchView(view);
+                    }
+                }
+            });
+        }
+        
+        listenToFavorites();
+        await fetchAndApplyUserPreferences();
+        fetchSectionsAndBooks(); 
+    } finally {
+        hideSpinner();
     }
-    
-    listenToFavorites();
-    await fetchAndApplyUserPreferences();
-    fetchSectionsAndBooks(); 
 });
 
 function showToast(title, body) {
@@ -283,6 +304,7 @@ saveOfflineBtn.addEventListener('click', async () => {
         const icon = saveOfflineBtn.querySelector('i');
         icon.className = 'spinner-border spinner-border-sm';
 
+        showSpinner();
         try {
             await fetch(currentPdfUrl); 
             showToast('نجاح', 'تم حفظ الكتاب بنجاح!');
@@ -291,6 +313,8 @@ saveOfflineBtn.addEventListener('click', async () => {
             console.error('Caching failed:', error);
             showToast('فشل', 'لم يتمكن من حفظ الكتاب.');
             updateOfflineButtonState(currentPdfUrl);
+        } finally {
+            hideSpinner();
         }
     }
 });
@@ -520,31 +544,36 @@ async function renderFavoritesSection() {
 
     const booksRow = sectionEl.querySelector('.books-row');
     
-    const bookPromises = Array.from(userFavorites).map(async (bookId) => {
-        try {
-            let bookRef = doc(db, 'books', bookId);
-            let bookDoc = await getDoc(bookRef);
-            if (!bookDoc.exists() && currentUser?.uid === DEVELOPER_UID) {
-                bookRef = doc(db, `users/${DEVELOPER_UID}/private_books`, bookId);
-                bookDoc = await getDoc(bookRef);
-            }
+    showSpinner();
+    try {
+        const bookPromises = Array.from(userFavorites).map(async (bookId) => {
+            try {
+                let bookRef = doc(db, 'books', bookId);
+                let bookDoc = await getDoc(bookRef);
+                if (!bookDoc.exists() && currentUser?.uid === DEVELOPER_UID) {
+                    bookRef = doc(db, `users/${DEVELOPER_UID}/private_books`, bookId);
+                    bookDoc = await getDoc(bookRef);
+                }
 
-            if (bookDoc.exists()) {
-                return createBookCardElement(bookDoc.id, bookDoc.data());
-            } else {
-                await deleteDoc(doc(getFavoritesCollection(), bookId));
+                if (bookDoc.exists()) {
+                    return createBookCardElement(bookDoc.id, bookDoc.data());
+                } else {
+                    await deleteDoc(doc(getFavoritesCollection(), bookId));
+                    return null;
+                }
+            } catch (error) {
+                console.error(`Error fetching favorite book ${bookId}:`, error);
                 return null;
             }
-        } catch (error) {
-            console.error(`Error fetching favorite book ${bookId}:`, error);
-            return null;
-        }
-    });
+        });
 
-    const bookCards = (await Promise.all(bookPromises)).filter(Boolean);
+        const bookCards = (await Promise.all(bookPromises)).filter(Boolean);
 
-    booksRow.innerHTML = '';
-    bookCards.forEach(card => booksRow.appendChild(card));
+        booksRow.innerHTML = '';
+        bookCards.forEach(card => booksRow.appendChild(card));
+    } finally {
+        hideSpinner();
+    }
 }
 
 async function toggleFavorite(bookId) {
@@ -553,6 +582,7 @@ async function toggleFavorite(bookId) {
     if (!favoritesCollection) return;
     const bookRef = doc(favoritesCollection, bookId);
 
+    showSpinner();
     try {
         if (userFavorites.has(bookId)) {
             await deleteDoc(bookRef);
@@ -561,6 +591,8 @@ async function toggleFavorite(bookId) {
         }
     } catch (error) {
         console.error("Error toggling favorite:", error);
+    } finally {
+        hideSpinner();
     }
 }
 
@@ -580,34 +612,47 @@ function updateAllFavoriteIcons() {
 }
 
 async function deleteBook(bookId) {
-     if (!bookId) return;
-     try {
+    if (!bookId) return;
+    showSpinner();
+    try {
         await deleteDoc(doc(getBooksCollection(), bookId));
-     } catch(error) { console.error("Error deleting book:", error); }
+    } catch(error) { 
+        console.error("Error deleting book:", error); 
+    } finally {
+        hideSpinner();
+    }
 }
 
 async function editSection(sectionId, currentTitle) {
     const newTitle = prompt("أدخل العنوان الجديد للقسم:", currentTitle);
     if (newTitle && newTitle.trim() !== '' && newTitle.trim() !== currentTitle) {
+        showSpinner();
         try {
             await updateDoc(doc(getSectionsCollection(), sectionId), {
                 title: newTitle.trim()
             });
         } catch (error) {
             console.error("Error updating section title: ", error);
+        } finally {
+            hideSpinner();
         }
     }
 }
 
 async function deleteSection(sectionId) {
     if (!confirm('هل أنت متأكد من حذف هذا القسم وكل الكتب الموجودة فيه؟')) return;
+    showSpinner();
     try {
         const booksQuery = query(getBooksCollection(), where("sectionId", "==", sectionId));
         const booksSnapshot = await getDocs(booksQuery);
         const deletePromises = booksSnapshot.docs.map(bookDoc => deleteDoc(bookDoc.ref));
         await Promise.all(deletePromises);
         await deleteDoc(doc(getSectionsCollection(), sectionId));
-    } catch (error) { console.error("Error deleting section:", error); }
+    } catch (error) { 
+        console.error("Error deleting section:", error); 
+    } finally {
+        hideSpinner();
+    }
 }
 
 addSectionModalEl.addEventListener('show.bs.modal', () => {
@@ -648,10 +693,15 @@ document.getElementById('add-section-form').addEventListener('submit', async (e)
     const titleInput = document.getElementById('section-title');
     const title = titleInput.value.trim();
     if (!title) return;
+    showSpinner();
     try {
         await addDoc(getSectionsCollection(), { title, createdAt: serverTimestamp() });
         titleInput.value = '';
-    } catch (error) { console.error("Error adding section: ", error); }
+    } catch (error) { 
+        console.error("Error adding section: ", error); 
+    } finally {
+        hideSpinner();
+    }
 });
 
 addBookModalEl.addEventListener('show.bs.modal', () => {
@@ -676,6 +726,7 @@ document.getElementById('add-book-form').addEventListener('submit', async (e) =>
 
     saveBtn.disabled = true; spinner.classList.remove('d-none');
     statusDiv.className = 'alert alert-info mt-2'; statusDiv.textContent = 'جارٍ رفع الملفات...';
+    showSpinner();
 
     try {
         const sectionId = document.getElementById('book-section').value;
@@ -711,6 +762,7 @@ document.getElementById('add-book-form').addEventListener('submit', async (e) =>
         statusDiv.textContent = `حدث خطأ: ${error.message}`;
     } finally {
         saveBtn.disabled = false; spinner.classList.add('d-none');
+        hideSpinner();
     }
 });
 
@@ -730,6 +782,7 @@ async function openMoveBookModal(bookId, bookTitle, currentSectionId) {
     moveBookIdInput.value = bookId;
     moveBookTitleEl.textContent = bookTitle;
     moveBookSectionSelect.innerHTML = '<option value="">جار التحميل...</option>';
+    showSpinner();
     try {
         const sectionsSnapshot = await getDocs(query(getSectionsCollection(), orderBy("createdAt", "desc")));
         let optionsHtml = '';
@@ -740,20 +793,30 @@ async function openMoveBookModal(bookId, bookTitle, currentSectionId) {
         });
         moveBookSectionSelect.innerHTML = optionsHtml || '<option value="">لا توجد أقسام أخرى</option>';
         moveBookModalInstance.show();
-    } catch (error) { console.error("Error loading sections for move modal:", error); }
+    } catch (error) { 
+        console.error("Error loading sections for move modal:", error); 
+    } finally {
+        hideSpinner();
+    }
 }
 
 moveBookForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const bookId = moveBookIdInput.value, newSectionId = moveBookSectionSelect.value;
     if (!bookId || !newSectionId) return;
+    showSpinner();
     try {
         await updateDoc(doc(getBooksCollection(), bookId), { sectionId: newSectionId });
         moveBookModalInstance.hide();
-    } catch (error) { console.error("Error moving book:", error); }
+    } catch (error) { 
+        console.error("Error moving book:", error); 
+    } finally {
+        hideSpinner();
+    }
 });
 
 async function openEditBookModal(bookId) {
+    showSpinner();
     try {
         const bookRef = doc(getBooksCollection(), bookId);
         const bookSnap = await getDoc(bookRef);
@@ -768,6 +831,8 @@ async function openEditBookModal(bookId) {
         }
     } catch (error) {
         console.error("Error opening edit book modal: ", error);
+    } finally {
+        hideSpinner();
     }
 }
 
@@ -779,6 +844,7 @@ editBookForm.addEventListener('submit', async (e) => {
 
     if (!bookId || !newTitle.trim()) return;
 
+    showSpinner();
     try {
         await updateDoc(doc(getBooksCollection(), bookId), {
             title: newTitle.trim(),
@@ -787,6 +853,8 @@ editBookForm.addEventListener('submit', async (e) => {
         editBookModalInstance.hide();
     } catch (error) {
         console.error("Error updating book: ", error);
+    } finally {
+        hideSpinner();
     }
 });
 
@@ -889,8 +957,10 @@ async function openPdfReader(bookId, pdfUrl, title) {
     pdfReaderView.classList.remove('d-none');
     pageNumSpan.textContent = 'يتم التحميل...';
     updateOfflineButtonState(pdfUrl);
-    const userProgress = await getUserBookProgress(bookId);
+    
+    showSpinner();
     try {
+        const userProgress = await getUserBookProgress(bookId);
         const loadingTask = pdfjsLib.getDocument(pdfUrl);
         pdfDoc = await loadingTask.promise;
         pageNum = userProgress.lastReadPage || 1;
@@ -901,19 +971,26 @@ async function openPdfReader(bookId, pdfUrl, title) {
     } catch (err) {
         console.error('Error loading PDF:', err);
         closePdfReader();
+    } finally {
+        hideSpinner();
     }
 }
 
 async function closePdfReader() {
-    if (currentUser && currentBookId) {
-        const progressRef = doc(db, 'user_profiles', currentUser.uid, 'books_progress', currentBookId);
-        try {
-            await setDoc(progressRef, { lastReadPage: pageNum, zoomLevel: currentScale }, { merge: true });
-        } catch (error) { console.error("Failed to save user progress:", error); }
+    showSpinner();
+    try {
+        if (currentUser && currentBookId) {
+            const progressRef = doc(db, 'user_profiles', currentUser.uid, 'books_progress', currentBookId);
+            try {
+                await setDoc(progressRef, { lastReadPage: pageNum, zoomLevel: currentScale }, { merge: true });
+            } catch (error) { console.error("Failed to save user progress:", error); }
+        }
+    } finally {
+        pdfDoc = null; currentBookId = null; currentPdfUrl = null; pageNum = 1;
+        libraryView.classList.remove('d-none');
+        pdfReaderView.classList.add('d-none');
+        hideSpinner();
     }
-    pdfDoc = null; currentBookId = null; currentPdfUrl = null; pageNum = 1;
-    libraryView.classList.remove('d-none');
-    pdfReaderView.classList.add('d-none');
 }
 function updateZoomDisplay() { currentZoomPercent.textContent = `${Math.round(currentScale * 100)}%`; }
 function changeZoom(amount) {
@@ -946,8 +1023,14 @@ displayModeBtn.addEventListener('click', async () => {
         pdfCanvas.classList.add('comfort-mode'); newMode = 1;
     }
     const profileRef = doc(db, 'user_profiles', currentUser.uid);
-    try { await setDoc(profileRef, { displayMode: newMode }, { merge: true });
-    } catch (error) { console.error("Failed to save display mode preference:", error); }
+    showSpinner();
+    try { 
+        await setDoc(profileRef, { displayMode: newMode }, { merge: true });
+    } catch (error) { 
+        console.error("Failed to save display mode preference:", error); 
+    } finally {
+        hideSpinner();
+    }
 });
 closeReaderBtn.addEventListener('click', closePdfReader);
 prevPageBtn.addEventListener('click', showPrevPage);

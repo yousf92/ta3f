@@ -1,3 +1,19 @@
+// --- START: Added Spinner Functions ---
+function showSpinner() {
+    const spinner = document.getElementById('loading-spinner-overlay');
+    if (spinner) {
+        spinner.classList.add('show');
+    }
+}
+
+function hideSpinner() {
+    const spinner = document.getElementById('loading-spinner-overlay');
+    if (spinner) {
+        spinner.classList.remove('show');
+    }
+}
+// --- END: Added Spinner Functions ---
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, getDocs, deleteDoc, setDoc, updateDoc, arrayUnion, arrayRemove, where, limit, increment, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -352,7 +368,8 @@ async function uploadAudioToCloudinary(audioBlob) {
     const formData = new FormData();
     formData.append('file', audioBlob, 'voice-message.webm');
     formData.append('upload_preset', 'my-voice-messages');
-
+    
+    showSpinner();
     try {
         const response = await fetch('https://api.cloudinary.com/v1_1/dkccdradf/video/upload', {
             method: 'POST',
@@ -368,6 +385,8 @@ async function uploadAudioToCloudinary(audioBlob) {
         console.error('Error uploading to Cloudinary:', error);
         showCustomConfirm('فشل رفع الرسالة الصوتية.', 'bi bi-exclamation-triangle-fill', () => {});
         return null;
+    } finally {
+        hideSpinner();
     }
 }
 // --- END: Cloudinary Audio Upload ---
@@ -611,190 +630,200 @@ function showMainView() {
 }
 
 async function showPrivateChatView(targetUserId, targetUserName, targetUserAvatar) {
-    recipientId = targetUserId;
-    if (!currentUserId || !recipientId) return;
+    showSpinner();
+    try {
+        recipientId = targetUserId;
+        if (!currentUserId || !recipientId) return;
 
-    privateChatRoomId = [currentUserId, recipientId].sort().join('_');
+        privateChatRoomId = [currentUserId, recipientId].sort().join('_');
 
-    const chatRoomRefForUnread = doc(db, "private_chats", privateChatRoomId);
-    await updateDoc(chatRoomRefForUnread, { [`unread_count_${currentUserId}`]: 0 }).catch(console.error);
-    
-    if (unsubscribeUserDoc) unsubscribeUserDoc();
-    if (unsubscribeRecipientDoc) unsubscribeRecipientDoc();
-
-    const updateBlockStatusUI = async () => {
-        const userDocSnap = await getDoc(doc(db, "users", currentUserId));
-        const recipientDocSnap = await getDoc(doc(db, "users", recipientId));
-
-        if (!userDocSnap.exists()) return;
-        const currentUserData = userDocSnap.data();
-        const recipientData = recipientDocSnap.exists() ? recipientDocSnap.data() : {};
+        const chatRoomRefForUnread = doc(db, "private_chats", privateChatRoomId);
+        await updateDoc(chatRoomRefForUnread, { [`unread_count_${currentUserId}`]: 0 }).catch(console.error);
         
-        const iAmBlocked = recipientData.blockedUsers?.includes(currentUserId);
-        const iHaveBlocked = currentUserData.blockedUsers?.includes(recipientId);
+        if (unsubscribeUserDoc) unsubscribeUserDoc();
+        if (unsubscribeRecipientDoc) unsubscribeRecipientDoc();
 
-        const privateInputArea = document.getElementById('private-input-area');
-        const blockNotification = document.getElementById('block-notification');
+        const updateBlockStatusUI = async () => {
+            const userDocSnap = await getDoc(doc(db, "users", currentUserId));
+            const recipientDocSnap = await getDoc(doc(db, "users", recipientId));
 
-        if (iAmBlocked) {
-            blockNotification.textContent = 'لا يمكنك إرسال رسالة إلى هذا المستخدم لأنه قام بحظرك.';
-            blockNotification.style.display = 'block';
-            privateInputArea.style.display = 'none';
-        } else if (iHaveBlocked) {
-            blockNotification.textContent = `لقد قمت بحظر هذا المستخدم.`;
-            blockNotification.style.display = 'block';
-            privateInputArea.style.display = 'none';
-        } else {
-            blockNotification.style.display = 'none';
-            privateInputArea.style.display = 'block';
+            if (!userDocSnap.exists()) return;
+            const currentUserData = userDocSnap.data();
+            const recipientData = recipientDocSnap.exists() ? recipientDocSnap.data() : {};
+            
+            const iAmBlocked = recipientData.blockedUsers?.includes(currentUserId);
+            const iHaveBlocked = currentUserData.blockedUsers?.includes(recipientId);
+
+            const privateInputArea = document.getElementById('private-input-area');
+            const blockNotification = document.getElementById('block-notification');
+
+            if (iAmBlocked) {
+                blockNotification.textContent = 'لا يمكنك إرسال رسالة إلى هذا المستخدم لأنه قام بحظرك.';
+                blockNotification.style.display = 'block';
+                privateInputArea.style.display = 'none';
+            } else if (iHaveBlocked) {
+                blockNotification.textContent = `لقد قمت بحظر هذا المستخدم.`;
+                blockNotification.style.display = 'block';
+                privateInputArea.style.display = 'none';
+            } else {
+                blockNotification.style.display = 'none';
+                privateInputArea.style.display = 'block';
+            }
+
+            if(iHaveBlocked) {
+                blockUnblockBtn.innerHTML = `<i class="bi bi-unlock-fill text-success me-2"></i> إلغاء الحظر`;
+                blockUnblockBtn.onclick = () => toggleBlockUser(false);
+            } else {
+                blockUnblockBtn.innerHTML = `<i class="bi bi-slash-circle-fill text-danger me-2"></i> حظر المستخدم`;
+                blockUnblockBtn.onclick = () => toggleBlockUser(true);
+            }
+        };
+        
+        unsubscribeUserDoc = onSnapshot(doc(db, "users", currentUserId), updateBlockStatusUI);
+        unsubscribeRecipientDoc = onSnapshot(doc(db, "users", recipientId), updateBlockStatusUI);
+        
+        const chatRoomRef = doc(db, "private_chats", privateChatRoomId);
+        const chatRoomSnap = await getDoc(chatRoomRef);
+        if (!chatRoomSnap.exists()) {
+            await setDoc(chatRoomRef, {
+                participants: [currentUserId, recipientId],
+                lastMessageTimestamp: serverTimestamp(),
+                [`unread_count_${currentUserId}`]: 0,
+                [`unread_count_${recipientId}`]: 0,
+                [`hidden_for_${currentUserId}`]: false,
+                [`hidden_for_${recipientId}`]: false
+            }, { merge: true });
         }
 
-        if(iHaveBlocked) {
-            blockUnblockBtn.innerHTML = `<i class="bi bi-unlock-fill text-success me-2"></i> إلغاء الحظر`;
-            blockUnblockBtn.onclick = () => toggleBlockUser(false);
-        } else {
-            blockUnblockBtn.innerHTML = `<i class="bi bi-slash-circle-fill text-danger me-2"></i> حظر المستخدم`;
-            blockUnblockBtn.onclick = () => toggleBlockUser(true);
-        }
-    };
-    
-    unsubscribeUserDoc = onSnapshot(doc(db, "users", currentUserId), updateBlockStatusUI);
-    unsubscribeRecipientDoc = onSnapshot(doc(db, "users", recipientId), updateBlockStatusUI);
-    
-    const chatRoomRef = doc(db, "private_chats", privateChatRoomId);
-    const chatRoomSnap = await getDoc(chatRoomRef);
-    if (!chatRoomSnap.exists()) {
-        await setDoc(chatRoomRef, {
-            participants: [currentUserId, recipientId],
-            lastMessageTimestamp: serverTimestamp(),
-            [`unread_count_${currentUserId}`]: 0,
-            [`unread_count_${recipientId}`]: 0,
-            [`hidden_for_${currentUserId}`]: false,
-            [`hidden_for_${recipientId}`]: false
-        }, { merge: true });
+        recipientNameEl.textContent = targetUserName;
+        recipientAvatarEl.src = targetUserAvatar || 'https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png';
+        mainView.classList.remove('active');
+        privateChatView.classList.add('active');
+        groupChatView.classList.remove('active');
+        loadPrivateMessages();
+    } finally {
+        hideSpinner();
     }
-
-    recipientNameEl.textContent = targetUserName;
-    recipientAvatarEl.src = targetUserAvatar || 'https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png';
-    mainView.classList.remove('active');
-    privateChatView.classList.add('active');
-    groupChatView.classList.remove('active');
-    loadPrivateMessages();
 }
 
 async function showGroupChatView(groupId, groupName) {
-    const groupDocRef = doc(db, "groups", groupId);
-    const groupDocSnap = await getDoc(groupDocRef);
-    if (!groupDocSnap.exists()) {
-        showCustomConfirm("المجموعة غير موجودة.", "bi bi-exclamation-circle-fill", () => {});
-        return;
-    }
-    
-    currentGroupData = groupDocSnap.data();
-    let isMember = currentGroupData.members && currentGroupData.members[currentUserId];
+    showSpinner();
+    try {
+        const groupDocRef = doc(db, "groups", groupId);
+        const groupDocSnap = await getDoc(groupDocRef);
+        if (!groupDocSnap.exists()) {
+            showCustomConfirm("المجموعة غير موجودة.", "bi bi-exclamation-circle-fill", () => {});
+            return;
+        }
+        
+        currentGroupData = groupDocSnap.data();
+        let isMember = currentGroupData.members && currentGroupData.members[currentUserId];
 
-    // Developer auto-join logic remains for convenience
-    if (currentUserRole === 'developer' && !isMember) {
-        await updateDoc(groupDocRef, { [`members.${currentUserId}`]: 'member' });
-        const updatedGroupSnap = await getDoc(groupDocRef);
-        currentGroupData = updatedGroupSnap.data();
-        isMember = true;
-    }
-    
-    const groupChatFooter = document.getElementById('group-chat-footer').querySelector('.card-footer');
+        // Developer auto-join logic remains for convenience
+        if (currentUserRole === 'developer' && !isMember) {
+            await updateDoc(groupDocRef, { [`members.${currentUserId}`]: 'member' });
+            const updatedGroupSnap = await getDoc(groupDocRef);
+            currentGroupData = updatedGroupSnap.data();
+            isMember = true;
+        }
+        
+        const groupChatFooter = document.getElementById('group-chat-footer').querySelector('.card-footer');
 
-    if (isMember) {
-        // Behavior for group members (original logic)
-        groupChatFooter.innerHTML = `
-             <div class="input-group-wrapper">
-                <div class="input-group">
-                    <textarea id="group-message-input" class="form-control" placeholder="اكتب رسالتك في المجموعة..." rows="1"></textarea>
-                    <button id="group-mic-button" class="mic-button"><i class="bi bi-mic-fill"></i></button>
-                    <button id="group-send-button" class="btn"><i class="bi bi-send-fill"></i></button>
+        if (isMember) {
+            // Behavior for group members (original logic)
+            groupChatFooter.innerHTML = `
+                <div class="input-group-wrapper">
+                    <div class="input-group">
+                        <textarea id="group-message-input" class="form-control" placeholder="اكتب رسالتك في المجموعة..." rows="1"></textarea>
+                        <button id="group-mic-button" class="mic-button"><i class="bi bi-mic-fill"></i></button>
+                        <button id="group-send-button" class="btn"><i class="bi bi-send-fill"></i></button>
+                    </div>
                 </div>
-            </div>
-            <div id="group-locked-recording-ui" class="recording-ui" style="display: none; justify-content: space-between; width: 100%;">
-                <button id="group-cancel-recording-btn" class="btn btn-lg text-danger"><i class="bi bi-trash-fill"></i></button>
-                <div class="d-flex align-items: center gap-2">
+                <div id="group-locked-recording-ui" class="recording-ui" style="display: none; justify-content: space-between; width: 100%;">
+                    <button id="group-cancel-recording-btn" class="btn btn-lg text-danger"><i class="bi bi-trash-fill"></i></button>
+                    <div class="d-flex align-items: center gap-2">
+                        <span class="recording-dot"></span>
+                        <span id="group-locked-recording-timer">00:00</span>
+                    </div>
+                    <button id="group-send-recording-btn" class="mic-button"><i class="bi bi-send-fill"></i></button>
+                </div>
+                <div id="group-recording-ui" class="recording-ui" style="display: none;">
                     <span class="recording-dot"></span>
-                    <span id="group-locked-recording-timer">00:00</span>
+                    <span id="group-recording-timer">00:00</span>
                 </div>
-                <button id="group-send-recording-btn" class="mic-button"><i class="bi bi-send-fill"></i></button>
-            </div>
-            <div id="group-recording-ui" class="recording-ui" style="display: none;">
-                <span class="recording-dot"></span>
-                <span id="group-recording-timer">00:00</span>
-            </div>
-        `;
-        document.getElementById('group-send-button').addEventListener('click', sendGroupMessage);
-        const groupMessageInputNew = document.getElementById('group-message-input');
-        groupMessageInputNew.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendGroupMessage(); } });
-        groupMessageInputNew.addEventListener('input', () => { groupMessageInputNew.style.height = 'auto'; groupMessageInputNew.style.height = (groupMessageInputNew.scrollHeight) + 'px'; });
-        
-        // Re-setup listeners for the new mic button
-        setupMicButtonListeners('group');
+            `;
+            document.getElementById('group-send-button').addEventListener('click', sendGroupMessage);
+            const groupMessageInputNew = document.getElementById('group-message-input');
+            groupMessageInputNew.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendGroupMessage(); } });
+            groupMessageInputNew.addEventListener('input', () => { groupMessageInputNew.style.height = 'auto'; groupMessageInputNew.style.height = (groupMessageInputNew.scrollHeight) + 'px'; });
+            
+            // Re-setup listeners for the new mic button
+            setupMicButtonListeners('group');
 
-        currentGroupId = groupId;
-        groupChatNameEl.textContent = groupName;
-        groupAvatarHeader.src = currentGroupData.groupPhotoURL || `https://placehold.co/100x100/00a884/FFFFFF?text=${groupName.charAt(0)}`;
-        
-        const currentUserRoleInGroup = currentGroupData.members[currentUserId];
-        if (currentGroupData.ownerId === currentUserId) {
-            uploadGroupPhotoContainer.style.display = 'flex';
-            uploadGroupPhotoBtn.onclick = () => uploadGroupPhoto(groupId);
-            deleteGroupPhotoBtn.style.display = currentGroupData.groupPhotoURL ? 'flex' : 'none';
-            deleteGroupPhotoBtn.onclick = () => deleteGroupPhoto(groupId);
+            currentGroupId = groupId;
+            groupChatNameEl.textContent = groupName;
+            groupAvatarHeader.src = currentGroupData.groupPhotoURL || `https://placehold.co/100x100/00a884/FFFFFF?text=${groupName.charAt(0)}`;
+            
+            const currentUserRoleInGroup = currentGroupData.members[currentUserId];
+            if (currentGroupData.ownerId === currentUserId) {
+                uploadGroupPhotoContainer.style.display = 'flex';
+                uploadGroupPhotoBtn.onclick = () => uploadGroupPhoto(groupId);
+                deleteGroupPhotoBtn.style.display = currentGroupData.groupPhotoURL ? 'flex' : 'none';
+                deleteGroupPhotoBtn.onclick = () => deleteGroupPhoto(groupId);
+            } else {
+                uploadGroupPhotoContainer.style.display = 'none';
+            }
+            if (currentUserRoleInGroup === 'owner' || currentUserRoleInGroup === 'admin') {
+                joinRequestsContainer.style.display = 'block';
+                loadJoinRequests(groupId);
+            } else {
+                joinRequestsContainer.style.display = 'none';
+            }
+            groupChatHeaderClickable.onclick = () => showGroupMembers(groupId);
+            loadGroupPinnedMessage(groupId);
+            loadGroupMessages(groupId);
+
         } else {
+            // Behavior for non-members (new logic)
+            currentGroupId = groupId;
+            groupChatNameEl.textContent = groupName;
+            groupAvatarHeader.src = currentGroupData.groupPhotoURL || `https://placehold.co/100x100/00a884/FFFFFF?text=${groupName.charAt(0)}`;
+            
+            groupMessagesBox.innerHTML = `
+                <div class="text-center p-5 text-muted d-flex flex-column justify-content-center align-items-center h-100">
+                    <i class="bi bi-people-fill" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">${groupName}</h4>
+                    <p class="lead">${currentGroupData.description || 'انضم إلى هذه المجموعة لعرض الرسائل والدردشة.'}</p>
+                </div>
+            `;
+
+            groupChatFooter.innerHTML = `
+                <div class="p-3">
+                    <button id="request-to-join-from-view-btn" class="btn btn-success w-100">
+                        <i class="bi bi-person-plus-fill me-2"></i> طلب انضمام
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('request-to-join-from-view-btn').addEventListener('click', (e) => {
+                window.requestToJoinGroup(groupId, e.currentTarget);
+            });
+
             uploadGroupPhotoContainer.style.display = 'none';
-        }
-        if (currentUserRoleInGroup === 'owner' || currentUserRoleInGroup === 'admin') {
-            joinRequestsContainer.style.display = 'block';
-            loadJoinRequests(groupId);
-        } else {
             joinRequestsContainer.style.display = 'none';
+            groupPinnedMessageContainer.style.display = 'none';
+            groupChatHeaderClickable.onclick = null;
+            if (unsubscribeGroupMessages) { unsubscribeGroupMessages(); unsubscribeGroupMessages = null; }
+            if (unsubscribeGroupDoc) { unsubscribeGroupDoc(); unsubscribeGroupDoc = null; }
+            if (unsubscribeJoinRequests) { unsubscribeJoinRequests(); unsubscribeJoinRequests = null; }
         }
-        groupChatHeaderClickable.onclick = () => showGroupMembers(groupId);
-        loadGroupPinnedMessage(groupId);
-        loadGroupMessages(groupId);
-
-    } else {
-        // Behavior for non-members (new logic)
-        currentGroupId = groupId;
-        groupChatNameEl.textContent = groupName;
-        groupAvatarHeader.src = currentGroupData.groupPhotoURL || `https://placehold.co/100x100/00a884/FFFFFF?text=${groupName.charAt(0)}`;
         
-        groupMessagesBox.innerHTML = `
-            <div class="text-center p-5 text-muted d-flex flex-column justify-content-center align-items-center h-100">
-                <i class="bi bi-people-fill" style="font-size: 4rem;"></i>
-                <h4 class="mt-3">${groupName}</h4>
-                <p class="lead">${currentGroupData.description || 'انضم إلى هذه المجموعة لعرض الرسائل والدردشة.'}</p>
-            </div>
-        `;
-
-        groupChatFooter.innerHTML = `
-            <div class="p-3">
-                <button id="request-to-join-from-view-btn" class="btn btn-success w-100">
-                    <i class="bi bi-person-plus-fill me-2"></i> طلب انضمام
-                </button>
-            </div>
-        `;
-        
-        document.getElementById('request-to-join-from-view-btn').addEventListener('click', (e) => {
-            window.requestToJoinGroup(groupId, e.currentTarget);
-        });
-
-        uploadGroupPhotoContainer.style.display = 'none';
-        joinRequestsContainer.style.display = 'none';
-        groupPinnedMessageContainer.style.display = 'none';
-        groupChatHeaderClickable.onclick = null;
-        if (unsubscribeGroupMessages) { unsubscribeGroupMessages(); unsubscribeGroupMessages = null; }
-        if (unsubscribeGroupDoc) { unsubscribeGroupDoc(); unsubscribeGroupDoc = null; }
-        if (unsubscribeJoinRequests) { unsubscribeJoinRequests(); unsubscribeJoinRequests = null; }
+        mainView.classList.remove('active');
+        privateChatView.classList.remove('active');
+        groupChatView.classList.add('active');
+    } finally {
+        hideSpinner();
     }
-    
-    mainView.classList.remove('active');
-    privateChatView.classList.remove('active');
-    groupChatView.classList.add('active');
 }
 window.showGroupChatView = showGroupChatView;
 
@@ -804,49 +833,54 @@ backToMainFromGroupBtn.addEventListener('click', showMainView);
 // --- END: View Management ---
 
 onAuthStateChanged(auth, async user => {
-    initializeAppLock();
-    setInterval(() => { if (document.visibilityState === 'visible') localStorage.setItem('app_last_unlock', Date.now()); }, 60 * 1000);
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') initializeAppLock(); });
+    showSpinner();
+    try {
+        initializeAppLock();
+        setInterval(() => { if (document.visibilityState === 'visible') localStorage.setItem('app_last_unlock', Date.now()); }, 60 * 1000);
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') initializeAppLock(); });
 
-    if (user) {
-        // User is signed in.
-        localStorage.setItem('lastReadTimestamp', Date.now().toString());
-        currentUserId = user.uid;
-        
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        
-        // If user doc doesn't exist and they are not anonymous, they are a new user who shouldn't be here.
-        if (!userDocSnap.exists() && !user.isAnonymous) {
-             window.location.href = 'index.html';
-             return;
+        if (user) {
+            // User is signed in.
+            localStorage.setItem('lastReadTimestamp', Date.now().toString());
+            currentUserId = user.uid;
+            
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            
+            // If user doc doesn't exist and they are not anonymous, they are a new user who shouldn't be here.
+            if (!userDocSnap.exists() && !user.isAnonymous) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const userData = userDocSnap.exists() ? userDocSnap.data() : {};
+            
+            // Set global user state
+            currentDisplayName = userData.displayName || `زائر-${user.uid.substring(0, 5)}`;
+            currentUserRole = userData.role || 'user';
+            isVisitor = user.isAnonymous;
+
+            if (isVisitor && !userData.displayName) {
+                await setDoc(userDocRef, { displayName: currentDisplayName, isVisitor: true, role: 'user' }, { merge: true });
+            }
+            
+            userProfiles[user.uid] = { ...userData, displayName: currentDisplayName, role: currentUserRole, isVisitor };
+            
+            listenForUserProfiles(); 
+            loadMessages();
+            loadPinnedMessage();
+            listenForMyGroups();
+            
+            initializeSwipeToReply('messages-box', '.message', setReplyFromElement);
+            initializeSwipeToReply('private-messages-box', '.private-message-wrapper', setPrivateReplyFromElement);
+            initializeSwipeToReply('group-messages-box', '.message', setGroupReplyFromElement);
+
+        } else {
+            // No user is signed in. Redirect to login page.
+            window.location.href = 'index.html';
         }
-
-        const userData = userDocSnap.exists() ? userDocSnap.data() : {};
-        
-        // Set global user state
-        currentDisplayName = userData.displayName || `زائر-${user.uid.substring(0, 5)}`;
-        currentUserRole = userData.role || 'user';
-        isVisitor = user.isAnonymous;
-
-        if (isVisitor && !userData.displayName) {
-            await setDoc(userDocRef, { displayName: currentDisplayName, isVisitor: true, role: 'user' }, { merge: true });
-        }
-        
-        userProfiles[user.uid] = { ...userData, displayName: currentDisplayName, role: currentUserRole, isVisitor };
-        
-        listenForUserProfiles(); 
-        loadMessages();
-        loadPinnedMessage();
-        listenForMyGroups();
-        
-        initializeSwipeToReply('messages-box', '.message', setReplyFromElement);
-        initializeSwipeToReply('private-messages-box', '.private-message-wrapper', setPrivateReplyFromElement);
-        initializeSwipeToReply('group-messages-box', '.message', setGroupReplyFromElement);
-
-    } else {
-        // No user is signed in. Redirect to login page.
-        window.location.href = 'index.html';
+    } finally {
+        hideSpinner();
     }
 });
 
@@ -912,6 +946,7 @@ createGroupForm.addEventListener('submit', async (e) => {
     
     if (!groupName || !currentUserId) return;
     
+    showSpinner();
     try {
         await addDoc(collection(db, "groups"), {
             groupName,
@@ -928,6 +963,8 @@ createGroupForm.addEventListener('submit', async (e) => {
     } catch (error) {
         console.error("Error creating group:", error);
         showCustomConfirm("حدث خطأ أثناء إنشاء المجموعة.", "bi bi-exclamation-triangle-fill", () => {});
+    } finally {
+        hideSpinner();
     }
 });
 
@@ -1022,96 +1059,108 @@ window.deleteGroup = async (groupId, groupName) => {
         `هل أنت متأكد من حذف مجموعة "${groupName}"؟ لا يمكن التراجع عن هذا الإجراء.`,
         "bi bi-trash3-fill",
         async () => {
-            await deleteDoc(doc(db, "groups", groupId));
+            showSpinner();
+            try {
+                await deleteDoc(doc(db, "groups", groupId));
+            } catch (error) {
+                console.error("Error deleting group:", error);
+            } finally {
+                hideSpinner();
+            }
         }
     );
 };
 
 async function showGroupMembers(groupId) {
-    const groupRef = doc(db, "groups", groupId);
-    const groupSnap = await getDoc(groupRef);
+    showSpinner();
+    try {
+        const groupRef = doc(db, "groups", groupId);
+        const groupSnap = await getDoc(groupRef);
 
-    if (!groupSnap.exists()) return;
+        if (!groupSnap.exists()) return;
 
-    const groupData = groupSnap.data();
-    const currentUserRoleInGroup = groupData.members[currentUserId];
-    const membersListEl = document.getElementById('group-members-list');
-    const membersModalFooter = document.getElementById('group-members-modal-footer');
-    membersListEl.innerHTML = '';
-    membersModalFooter.innerHTML = '';
+        const groupData = groupSnap.data();
+        const currentUserRoleInGroup = groupData.members[currentUserId];
+        const membersListEl = document.getElementById('group-members-list');
+        const membersModalFooter = document.getElementById('group-members-modal-footer');
+        membersListEl.innerHTML = '';
+        membersModalFooter.innerHTML = '';
 
-    if (currentUserRoleInGroup && currentUserRoleInGroup !== 'owner') {
-         const leaveBtn = document.createElement('button');
-         leaveBtn.className = 'btn btn-danger w-100 mb-2'; // Added margin bottom
-         leaveBtn.innerHTML = '<i class="bi bi-box-arrow-right me-2"></i> مغادرة المجموعة';
-         const escapedGroupName = groupData.groupName.replace(/'/g, "\\'");
-         leaveBtn.onclick = () => window.leaveCurrentGroup(groupId, escapedGroupName);
-         membersModalFooter.appendChild(leaveBtn);
-    }
-
-    if (currentUserRoleInGroup === 'owner') {
-        const editDescBtn = document.createElement('button');
-        editDescBtn.className = 'btn btn-outline-info w-100';
-        editDescBtn.innerHTML = '<i class="bi bi-pencil-fill me-2"></i> تعديل الوصف';
-        editDescBtn.onclick = () => {
-            document.getElementById('group-description-textarea').value = groupData.description || '';
-            groupMembersModal.hide(); 
-            editGroupDescriptionModal.show();
-        };
-        membersModalFooter.appendChild(editDescBtn);
-    }
-
-    const memberIds = Object.keys(groupData.members);
-
-    for (const memberId of memberIds) {
-        const userProfile = userProfiles[memberId];
-         if (!userProfile) continue;
-        
-        if (userProfile.role === 'developer') {
-            continue; 
+        if (currentUserRoleInGroup && currentUserRoleInGroup !== 'owner') {
+            const leaveBtn = document.createElement('button');
+            leaveBtn.className = 'btn btn-danger w-100 mb-2'; // Added margin bottom
+            leaveBtn.innerHTML = '<i class="bi bi-box-arrow-right me-2"></i> مغادرة المجموعة';
+            const escapedGroupName = groupData.groupName.replace(/'/g, "\\'");
+            leaveBtn.onclick = () => window.leaveCurrentGroup(groupId, escapedGroupName);
+            membersModalFooter.appendChild(leaveBtn);
         }
 
-        const memberRole = groupData.members[memberId];
-        const escapedMemberName = userProfile.displayName.replace(/'/g, "\\'");
-        
-        let actionsHtml = '<div class="member-actions">';
-        
-        if (currentUserRoleInGroup === 'owner' && memberId !== currentUserId) {
-             if (memberRole === 'member') {
-                actionsHtml += `<button class="btn btn-sm btn-outline-success role-toggle-btn" onclick="window.toggleGroupAdminRole('${groupId}', '${memberId}', 'admin')">ترقية لمشرف</button>`;
-            } else if (memberRole === 'admin') {
-                actionsHtml += `<button class="btn btn-sm btn-outline-warning role-toggle-btn" onclick="window.toggleGroupAdminRole('${groupId}', '${memberId}', 'member')">تخفيض لعضو</button>`;
+        if (currentUserRoleInGroup === 'owner') {
+            const editDescBtn = document.createElement('button');
+            editDescBtn.className = 'btn btn-outline-info w-100';
+            editDescBtn.innerHTML = '<i class="bi bi-pencil-fill me-2"></i> تعديل الوصف';
+            editDescBtn.onclick = () => {
+                document.getElementById('group-description-textarea').value = groupData.description || '';
+                groupMembersModal.hide(); 
+                editGroupDescriptionModal.show();
+            };
+            membersModalFooter.appendChild(editDescBtn);
+        }
+
+        const memberIds = Object.keys(groupData.members);
+
+        for (const memberId of memberIds) {
+            const userProfile = userProfiles[memberId];
+            if (!userProfile) continue;
+            
+            if (userProfile.role === 'developer') {
+                continue; 
             }
-        }
-        if ((currentUserRoleInGroup === 'owner' || currentUserRoleInGroup === 'admin') && memberRole === 'member' && memberId !== currentUserId) {
-            actionsHtml += `<button class="btn btn-sm btn-outline-danger kick-member-btn" onclick="window.kickGroupMember('${groupId}', '${memberId}', '${escapedMemberName}')">طرد</button>`;
-        }
-        
-        const isTargetOwner = memberRole === 'owner';
-        const isTargetDeveloper = userProfile.role === 'developer';
-        if (currentUserRole === 'developer' && !isTargetOwner && !isTargetDeveloper && memberId !== currentUserId) {
-             actionsHtml += `<button class="btn btn-sm text-danger kick-member-btn" onclick="window.kickGroupMember('${groupId}', '${memberId}', '${escapedMemberName}')" title="طرد بواسطة مطور"><i class="bi bi-x-circle-fill fs-5"></i></button>`;
-        }
-        
-        actionsHtml += '</div>';
 
-        let roleBadge = '';
-        if (memberRole === 'owner') {
-            roleBadge = '<span class="badge bg-primary role-badge">المالك</span>';
-        } else if (memberRole === 'admin') {
-            roleBadge = '<span class="badge bg-success role-badge">مشرف</span>';
-        }
+            const memberRole = groupData.members[memberId];
+            const escapedMemberName = userProfile.displayName.replace(/'/g, "\\'");
+            
+            let actionsHtml = '<div class="member-actions">';
+            
+            if (currentUserRoleInGroup === 'owner' && memberId !== currentUserId) {
+                if (memberRole === 'member') {
+                    actionsHtml += `<button class="btn btn-sm btn-outline-success role-toggle-btn" onclick="window.toggleGroupAdminRole('${groupId}', '${memberId}', 'admin')">ترقية لمشرف</button>`;
+                } else if (memberRole === 'admin') {
+                    actionsHtml += `<button class="btn btn-sm btn-outline-warning role-toggle-btn" onclick="window.toggleGroupAdminRole('${groupId}', '${memberId}', 'member')">تخفيض لعضو</button>`;
+                }
+            }
+            if ((currentUserRoleInGroup === 'owner' || currentUserRoleInGroup === 'admin') && memberRole === 'member' && memberId !== currentUserId) {
+                actionsHtml += `<button class="btn btn-sm btn-outline-danger kick-member-btn" onclick="window.kickGroupMember('${groupId}', '${memberId}', '${escapedMemberName}')">طرد</button>`;
+            }
+            
+            const isTargetOwner = memberRole === 'owner';
+            const isTargetDeveloper = userProfile.role === 'developer';
+            if (currentUserRole === 'developer' && !isTargetOwner && !isTargetDeveloper && memberId !== currentUserId) {
+                actionsHtml += `<button class="btn btn-sm text-danger kick-member-btn" onclick="window.kickGroupMember('${groupId}', '${memberId}', '${escapedMemberName}')" title="طرد بواسطة مطور"><i class="bi bi-x-circle-fill fs-5"></i></button>`;
+            }
+            
+            actionsHtml += '</div>';
 
-        const memberEl = document.createElement('div');
-        memberEl.className = 'group-member-item';
-        memberEl.innerHTML = `
-            <img src="${userProfile.photoURL || 'https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png'}" alt="Avatar">
-            <div class="flex-grow-1">${userProfile.displayName} ${roleBadge}</div>
-            ${actionsHtml}
-        `;
-        membersListEl.appendChild(memberEl);
+            let roleBadge = '';
+            if (memberRole === 'owner') {
+                roleBadge = '<span class="badge bg-primary role-badge">المالك</span>';
+            } else if (memberRole === 'admin') {
+                roleBadge = '<span class="badge bg-success role-badge">مشرف</span>';
+            }
+
+            const memberEl = document.createElement('div');
+            memberEl.className = 'group-member-item';
+            memberEl.innerHTML = `
+                <img src="${userProfile.photoURL || 'https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png'}" alt="Avatar">
+                <div class="flex-grow-1">${userProfile.displayName} ${roleBadge}</div>
+                ${actionsHtml}
+            `;
+            membersListEl.appendChild(memberEl);
+        }
+        groupMembersModal.show();
+    } finally {
+        hideSpinner();
     }
-    groupMembersModal.show();
 }
 
 editGroupDescriptionForm.addEventListener('submit', async (e) => {
@@ -1119,21 +1168,29 @@ editGroupDescriptionForm.addEventListener('submit', async (e) => {
     if (!currentGroupId) return;
     const newDescription = document.getElementById('group-description-textarea').value.trim();
     const groupRef = doc(db, "groups", currentGroupId);
+    showSpinner();
     try {
         await updateDoc(groupRef, { description: newDescription });
         editGroupDescriptionModal.hide();
     } catch (error) {
         console.error("Error updating description:", error);
         showCustomConfirm("فشل تحديث الوصف.", "bi bi-exclamation-triangle-fill", () => {});
+    } finally {
+        hideSpinner();
     }
 });
 
 window.toggleGroupAdminRole = async (groupId, memberId, newRole) => {
-    const groupRef = doc(db, "groups", groupId);
-    await updateDoc(groupRef, {
-        [`members.${memberId}`]: newRole
-    });
-    showGroupMembers(groupId); // Refresh modal
+    showSpinner();
+    try {
+        const groupRef = doc(db, "groups", groupId);
+        await updateDoc(groupRef, {
+            [`members.${memberId}`]: newRole
+        });
+        showGroupMembers(groupId); // Refresh modal
+    } finally {
+        hideSpinner();
+    }
 };
 
 window.kickGroupMember = async (groupId, memberId, memberName) => {
@@ -1141,11 +1198,16 @@ window.kickGroupMember = async (groupId, memberId, memberName) => {
         `هل أنت متأكد من طرد "${memberName}" من المجموعة؟`,
         "bi bi-person-x-fill",
         async () => {
-            const groupRef = doc(db, "groups", groupId);
-            await updateDoc(groupRef, {
-                 [`members.${memberId}`]: deleteField()
-            });
-            showGroupMembers(groupId); // Refresh the modal list
+            showSpinner();
+            try {
+                const groupRef = doc(db, "groups", groupId);
+                await updateDoc(groupRef, {
+                    [`members.${memberId}`]: deleteField()
+                });
+                showGroupMembers(groupId); // Refresh the modal list
+            } finally {
+                hideSpinner();
+            }
         }
     );
 };
@@ -1155,36 +1217,47 @@ window.leaveCurrentGroup = (groupId, groupName) => {
         `هل أنت متأكد أنك تريد مغادرة مجموعة "${groupName}"؟`,
         "bi bi-box-arrow-right",
         async () => {
-            const groupRef = doc(db, "groups", groupId);
-            await updateDoc(groupRef, {
-                [`members.${currentUserId}`]: deleteField()
-            });
-            groupMembersModal.hide();
-            showMainView();
+            showSpinner();
+            try {
+                const groupRef = doc(db, "groups", groupId);
+                await updateDoc(groupRef, {
+                    [`members.${currentUserId}`]: deleteField()
+                });
+                groupMembersModal.hide();
+                showMainView();
+            } finally {
+                hideSpinner();
+            }
         }
     );
 };
 
 window.requestToJoinGroup = async (groupId, btn) => {
     btn.disabled = true;
-    btn.textContent = 'تم الإرسال';
+    btn.textContent = 'جاري الإرسال...';
+    showSpinner();
     
-    const requestRef = collection(db, 'joinRequests');
-    const q = query(requestRef, where('groupId', '==', groupId), where('userId', '==', currentUserId));
-    const existingRequests = await getDocs(q);
-    if(!existingRequests.empty) {
-        showCustomConfirm("لقد أرسلت طلب انضمام بالفعل لهذه المجموعة.", "bi bi-info-circle-fill", () => {});
-        btn.textContent = 'الطلب مرسل';
-        return;
+    try {
+        const requestRef = collection(db, 'joinRequests');
+        const q = query(requestRef, where('groupId', '==', groupId), where('userId', '==', currentUserId));
+        const existingRequests = await getDocs(q);
+        if(!existingRequests.empty) {
+            showCustomConfirm("لقد أرسلت طلب انضمام بالفعل لهذه المجموعة.", "bi bi-info-circle-fill", () => {});
+            btn.textContent = 'الطلب مرسل';
+            return;
+        }
+        
+        await addDoc(requestRef, {
+            groupId: groupId,
+            userId: currentUserId,
+            userName: currentDisplayName,
+            status: 'pending',
+            createdAt: serverTimestamp()
+        });
+        btn.textContent = 'تم الإرسال';
+    } finally {
+        hideSpinner();
     }
-    
-    await addDoc(requestRef, {
-        groupId: groupId,
-        userId: currentUserId,
-        userName: currentDisplayName,
-        status: 'pending',
-        createdAt: serverTimestamp()
-    });
 };
 
 function loadJoinRequests(groupId) {
@@ -1214,15 +1287,20 @@ function loadJoinRequests(groupId) {
 }
 
 window.manageJoinRequest = async (requestId, requesterId, groupId, approve) => {
-    const requestRef = doc(db, 'joinRequests', requestId);
-    if (approve) {
-        const groupRef = doc(db, 'groups', groupId);
-        const batch = writeBatch(db);
-        batch.update(groupRef, { [`members.${requesterId}`]: "member" });
-        batch.delete(requestRef);
-        await batch.commit();
-    } else {
-        await deleteDoc(requestRef);
+    showSpinner();
+    try {
+        const requestRef = doc(db, 'joinRequests', requestId);
+        if (approve) {
+            const groupRef = doc(db, 'groups', groupId);
+            const batch = writeBatch(db);
+            batch.update(groupRef, { [`members.${requesterId}`]: "member" });
+            batch.delete(requestRef);
+            await batch.commit();
+        } else {
+            await deleteDoc(requestRef);
+        }
+    } finally {
+        hideSpinner();
     }
 };
 
@@ -1234,11 +1312,15 @@ async function sendGroupMessage() {
     const messageData = { text, senderId: currentUserId, createdAt: serverTimestamp() };
     if(groupReplyToMessage) messageData.replyTo = groupReplyToMessage;
 
-    await addDoc(messagesRef, messageData);
-    
-    document.getElementById('group-message-input').value = "";
-    document.getElementById('group-message-input').style.height = 'auto';
-    cancelGroupReply();
+    showSpinner();
+    try {
+        await addDoc(messagesRef, messageData);
+        document.getElementById('group-message-input').value = "";
+        document.getElementById('group-message-input').style.height = 'auto';
+        cancelGroupReply();
+    } finally {
+        hideSpinner();
+    }
 }
 
 async function sendGroupVoiceMessage(url, duration) {
@@ -1253,8 +1335,14 @@ async function sendGroupVoiceMessage(url, duration) {
     };
     if(groupReplyToMessage) messageData.replyTo = groupReplyToMessage;
 
-    const docRef = await addDoc(messagesRef, messageData);
-    cancelGroupReply();
+    showSpinner();
+    let docRef = null;
+    try {
+        docRef = await addDoc(messagesRef, messageData);
+        cancelGroupReply();
+    } finally {
+        hideSpinner();
+    }
     return docRef;
 }
 
@@ -1394,22 +1482,27 @@ function cancelGroupReply() {
 
 window.toggleGroupReaction = async (msgId, emoji) => {
     if (!currentUserId || !currentGroupId) return;
-    const msgRef = doc(db, "groups", currentGroupId, "messages", msgId);
-    const msgDoc = await getDoc(msgRef);
-    if (!msgDoc.exists()) return;
+    showSpinner();
+    try {
+        const msgRef = doc(db, "groups", currentGroupId, "messages", msgId);
+        const msgDoc = await getDoc(msgRef);
+        if (!msgDoc.exists()) return;
 
-    const msgData = msgDoc.data();
-    const reactions = msgData.reactions || [];
-    const existingReaction = reactions.find(r => r.userId === currentUserId);
+        const msgData = msgDoc.data();
+        const reactions = msgData.reactions || [];
+        const existingReaction = reactions.find(r => r.userId === currentUserId);
 
-    if (existingReaction) {
-        const newReactions = reactions.filter(r => r.userId !== currentUserId);
-        if (existingReaction.emoji !== emoji) {
-            newReactions.push({ userId: currentUserId, emoji });
+        if (existingReaction) {
+            const newReactions = reactions.filter(r => r.userId !== currentUserId);
+            if (existingReaction.emoji !== emoji) {
+                newReactions.push({ userId: currentUserId, emoji });
+            }
+            await updateDoc(msgRef, { reactions: newReactions });
+        } else {
+            await updateDoc(msgRef, { reactions: arrayUnion({ userId: currentUserId, emoji }) });
         }
-        await updateDoc(msgRef, { reactions: newReactions });
-    } else {
-        await updateDoc(msgRef, { reactions: arrayUnion({ userId: currentUserId, emoji }) });
+    } finally {
+        hideSpinner();
     }
 };
 
@@ -1423,12 +1516,17 @@ const cloudinaryWidget = cloudinary.createUploadWidget({
     showSkipCropButton: false
 }, (error, result) => { 
     if (!error && result && result.event === "success") {
-        const groupRef = doc(db, "groups", window.currentUploadingGroupId);
-        updateDoc(groupRef, { groupPhotoURL: result.info.secure_url })
-            .then(() => {
-                window.currentUploadingGroupId = null; // Clear temp state
-                deleteGroupPhotoBtn.style.display = 'flex';
-            });
+        showSpinner();
+        try {
+            const groupRef = doc(db, "groups", window.currentUploadingGroupId);
+            updateDoc(groupRef, { groupPhotoURL: result.info.secure_url })
+                .then(() => {
+                    window.currentUploadingGroupId = null; // Clear temp state
+                    deleteGroupPhotoBtn.style.display = 'flex';
+                });
+        } finally {
+            hideSpinner();
+        }
     }
 });
 
@@ -1442,9 +1540,14 @@ async function deleteGroupPhoto(groupId){
         `هل أنت متأكد من حذف صورة المجموعة؟`,
         "bi bi-image-alt",
         async () => {
-            const groupRef = doc(db, "groups", groupId);
-            await updateDoc(groupRef, { groupPhotoURL: null });
-            deleteGroupPhotoBtn.style.display = 'none';
+            showSpinner();
+            try {
+                const groupRef = doc(db, "groups", groupId);
+                await updateDoc(groupRef, { groupPhotoURL: null });
+                deleteGroupPhotoBtn.style.display = 'none';
+            } finally {
+                hideSpinner();
+            }
         }
     );
 }
@@ -1461,34 +1564,54 @@ window.editGroupMessage = (msgId, text) => {
 
 window.deleteOwnGroupMessage = async (msgId) => {
     showCustomConfirm("هل أنت متأكد من حذف رسالتك؟", "bi bi-trash-fill", async () => {
-        await deleteDoc(doc(db, "groups", currentGroupId, "messages", msgId));
+        showSpinner();
+        try {
+            await deleteDoc(doc(db, "groups", currentGroupId, "messages", msgId));
+        } finally {
+            hideSpinner();
+        }
     });
 };
 
 window.deleteOtherGroupMessage = async (msgId) => {
     showCustomConfirm("هل أنت متأكد من حذف هذه الرسالة؟ (إجراء إداري)", "bi bi-shield-x", async () => {
-        await deleteDoc(doc(db, "groups", currentGroupId, "messages", msgId));
+        showSpinner();
+        try {
+            await deleteDoc(doc(db, "groups", currentGroupId, "messages", msgId));
+        } finally {
+            hideSpinner();
+        }
     });
 };
 
 window.pinGroupMessage = async (messageId) => {
-    const messageRef = doc(db, "groups", currentGroupId, "messages", messageId);
-    const messageSnap = await getDoc(messageRef);
-    if (!messageSnap.exists()) return;
-    const messageData = messageSnap.data();
+    showSpinner();
+    try {
+        const messageRef = doc(db, "groups", currentGroupId, "messages", messageId);
+        const messageSnap = await getDoc(messageRef);
+        if (!messageSnap.exists()) return;
+        const messageData = messageSnap.data();
 
-    const pinnedData = {
-        messageId: messageId,
-        text: messageData.type === 'voice' ? '[رسالة صوتية]' : messageData.text,
-        senderName: userProfiles[messageData.senderId]?.displayName || 'عضو',
-        pinnedBy: currentDisplayName
-    };
+        const pinnedData = {
+            messageId: messageId,
+            text: messageData.type === 'voice' ? '[رسالة صوتية]' : messageData.text,
+            senderName: userProfiles[messageData.senderId]?.displayName || 'عضو',
+            pinnedBy: currentDisplayName
+        };
 
-    await updateDoc(doc(db, "groups", currentGroupId), { pinnedMessage: pinnedData });
+        await updateDoc(doc(db, "groups", currentGroupId), { pinnedMessage: pinnedData });
+    } finally {
+        hideSpinner();
+    }
 };
 
 window.unpinGroupMessage = async () => {
-     await updateDoc(doc(db, "groups", currentGroupId), { pinnedMessage: deleteField() });
+    showSpinner();
+    try {
+        await updateDoc(doc(db, "groups", currentGroupId), { pinnedMessage: deleteField() });
+    } finally {
+        hideSpinner();
+    }
 };
 
 function loadGroupPinnedMessage(groupId) {
@@ -1542,69 +1665,80 @@ async function sendPrivateMessage() {
     const text = privateMessageInput.value.trim();
     if (!text || !currentUserId || !privateChatRoomId || !recipientId) return;
     
-    const messagesRef = collection(db, "private_chats", privateChatRoomId, "messages");
-    const messageData = {
-        text,
-        senderId: currentUserId,
-        recipientId: recipientId,
-        createdAt: serverTimestamp(),
-        status: 'sent'
-    };
-    
-    if (privateReplyToMessage) {
-        messageData.replyTo = privateReplyToMessage;
+    showSpinner();
+    try {
+        const messagesRef = collection(db, "private_chats", privateChatRoomId, "messages");
+        const messageData = {
+            text,
+            senderId: currentUserId,
+            recipientId: recipientId,
+            createdAt: serverTimestamp(),
+            status: 'sent'
+        };
+        
+        if (privateReplyToMessage) {
+            messageData.replyTo = privateReplyToMessage;
+        }
+
+        const docRef = await addDoc(messagesRef, messageData);
+        
+        const chatRoomRef = doc(db, "private_chats", privateChatRoomId);
+        await updateDoc(chatRoomRef, {
+            lastMessage: text,
+            lastMessageTimestamp: serverTimestamp(),
+            [`last_message_id_${recipientId}`]: docRef.id,
+            [`last_message_id_${currentUserId}`]: docRef.id,
+            [`unread_count_${recipientId}`]: increment(1),
+            [`hidden_for_${currentUserId}`]: false,
+            [`hidden_for_${recipientId}`]: false
+        });
+
+        privateMessageInput.value = "";
+        privateMessageInput.style.height = 'auto';
+        cancelPrivateReply();
+    } finally {
+        hideSpinner();
     }
-
-    const docRef = await addDoc(messagesRef, messageData);
-    
-    const chatRoomRef = doc(db, "private_chats", privateChatRoomId);
-    await updateDoc(chatRoomRef, {
-        lastMessage: text,
-        lastMessageTimestamp: serverTimestamp(),
-        [`last_message_id_${recipientId}`]: docRef.id,
-        [`last_message_id_${currentUserId}`]: docRef.id,
-        [`unread_count_${recipientId}`]: increment(1),
-        [`hidden_for_${currentUserId}`]: false,
-        [`hidden_for_${recipientId}`]: false
-    });
-
-    privateMessageInput.value = "";
-    privateMessageInput.style.height = 'auto';
-    cancelPrivateReply();
 }
 
 async function sendPrivateVoiceMessage(url, duration) {
     if (!url || !currentUserId || !privateChatRoomId || !recipientId) return null;
     
-    const messagesRef = collection(db, "private_chats", privateChatRoomId, "messages");
-    const messageData = {
-        type: 'voice',
-        text: url,
-        duration: duration,
-        senderId: currentUserId,
-        recipientId: recipientId,
-        createdAt: serverTimestamp(),
-        status: 'sent'
-    };
-    
-    if (privateReplyToMessage) {
-        messageData.replyTo = privateReplyToMessage;
+    showSpinner();
+    let docRef = null;
+    try {
+        const messagesRef = collection(db, "private_chats", privateChatRoomId, "messages");
+        const messageData = {
+            type: 'voice',
+            text: url,
+            duration: duration,
+            senderId: currentUserId,
+            recipientId: recipientId,
+            createdAt: serverTimestamp(),
+            status: 'sent'
+        };
+        
+        if (privateReplyToMessage) {
+            messageData.replyTo = privateReplyToMessage;
+        }
+
+        docRef = await addDoc(messagesRef, messageData);
+        
+        const chatRoomRef = doc(db, "private_chats", privateChatRoomId);
+        await updateDoc(chatRoomRef, {
+            lastMessage: '🎤 رسالة صوتية',
+            lastMessageTimestamp: serverTimestamp(),
+            [`last_message_id_${recipientId}`]: docRef.id,
+            [`last_message_id_${currentUserId}`]: docRef.id,
+            [`unread_count_${recipientId}`]: increment(1),
+            [`hidden_for_${currentUserId}`]: false,
+            [`hidden_for_${recipientId}`]: false
+        });
+
+        cancelPrivateReply();
+    } finally {
+        hideSpinner();
     }
-
-    const docRef = await addDoc(messagesRef, messageData);
-    
-    const chatRoomRef = doc(db, "private_chats", privateChatRoomId);
-    await updateDoc(chatRoomRef, {
-        lastMessage: '🎤 رسالة صوتية',
-        lastMessageTimestamp: serverTimestamp(),
-        [`last_message_id_${recipientId}`]: docRef.id,
-        [`last_message_id_${currentUserId}`]: docRef.id,
-        [`unread_count_${recipientId}`]: increment(1),
-        [`hidden_for_${currentUserId}`]: false,
-        [`hidden_for_${recipientId}`]: false
-    });
-
-    cancelPrivateReply();
     return docRef;
 }
 
@@ -1734,8 +1868,13 @@ window.deletePrivateMessage = async (messageId) => {
         "هل أنت متأكد من حذف هذه الرسالة للجميع؟",
         "bi bi-trash-fill",
         async () => {
-             const msgRef = doc(db, "private_chats", privateChatRoomId, "messages", messageId);
-             await deleteDoc(msgRef);
+            showSpinner();
+            try {
+                const msgRef = doc(db, "private_chats", privateChatRoomId, "messages", messageId);
+                await deleteDoc(msgRef);
+            } finally {
+                hideSpinner();
+            }
         }
     );
 }
@@ -1755,32 +1894,37 @@ userSearchInput.addEventListener('input', (e) => {
 });
 
 async function searchUsers(name) {
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("displayName", ">=", name), where("displayName", "<=", name + '\uf8ff'), limit(10));
-    const querySnapshot = await getDocs(q);
-    const usersListContainerEl = document.getElementById('users-list-container');
-    let searchResultsEl = usersListContainerEl.querySelector('#search-results');
-    if (!searchResultsEl) {
-        searchResultsEl = document.createElement('div');
-        searchResultsEl.id = 'search-results';
-        usersListContainerEl.prepend(searchResultsEl);
+    showSpinner();
+    try {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("displayName", ">=", name), where("displayName", "<=", name + '\uf8ff'), limit(10));
+        const querySnapshot = await getDocs(q);
+        const usersListContainerEl = document.getElementById('users-list-container');
+        let searchResultsEl = usersListContainerEl.querySelector('#search-results');
+        if (!searchResultsEl) {
+            searchResultsEl = document.createElement('div');
+            searchResultsEl.id = 'search-results';
+            usersListContainerEl.prepend(searchResultsEl);
+        }
+        
+        let searchResultsHtml = '';
+        if(querySnapshot.empty){
+            searchResultsHtml = '<p class="text-center text-muted p-3">لم يتم العثور على مستخدمين</p>';
+        }
+        querySnapshot.forEach((doc) => {
+            if (doc.id === currentUserId) return;
+            const userData = doc.data();
+            searchResultsHtml += `
+                <div class="user-list-item" onclick="window.startPrivateChatFromSearch('${doc.id}', '${userData.displayName.replace(/'/g, "\\'")}', '${userData.photoURL || ''}')">
+                    <img src="${userData.photoURL || 'https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png'}" alt="Avatar">
+                    <span class="user-name">${userData.displayName || 'مستخدم'}</span>
+                </div>
+            `;
+        });
+        searchResultsEl.innerHTML = searchResultsHtml;
+    } finally {
+        hideSpinner();
     }
-    
-    let searchResultsHtml = '';
-    if(querySnapshot.empty){
-         searchResultsHtml = '<p class="text-center text-muted p-3">لم يتم العثور على مستخدمين</p>';
-    }
-    querySnapshot.forEach((doc) => {
-        if (doc.id === currentUserId) return;
-        const userData = doc.data();
-        searchResultsHtml += `
-            <div class="user-list-item" onclick="window.startPrivateChatFromSearch('${doc.id}', '${userData.displayName.replace(/'/g, "\\'")}', '${userData.photoURL || ''}')">
-                <img src="${userData.photoURL || 'https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png'}" alt="Avatar">
-                <span class="user-name">${userData.displayName || 'مستخدم'}</span>
-            </div>
-        `;
-    });
-    searchResultsEl.innerHTML = searchResultsHtml;
 }
 
 window.startPrivateChatFromSearch = (id, name, avatar) => {
@@ -1847,8 +1991,13 @@ function renderPrivateConversations(conversations = []) {
                  "هل أنت متأكد من حذف هذه المحادثة من قائمتك؟",
                  "bi bi-trash-fill",
                  async () => {
-                    const chatRoomRef = doc(db, "private_chats", chatRoomId);
-                    await updateDoc(chatRoomRef, { [`hidden_for_${currentUserId}`]: true });
+                    showSpinner();
+                    try {
+                        const chatRoomRef = doc(db, "private_chats", chatRoomId);
+                        await updateDoc(chatRoomRef, { [`hidden_for_${currentUserId}`]: true });
+                    } finally {
+                        hideSpinner();
+                    }
                  }
              );
          });
@@ -1912,10 +2061,15 @@ async function toggleBlockUser(shouldBlock) {
         confirmMessage,
         "bi bi-slash-circle-fill",
         async () => {
-            const currentUserRef = doc(db, "users", currentUserId);
-            const userUpdate = { blockedUsers: shouldBlock ? arrayUnion(recipientId) : arrayRemove(recipientId) };
-            await updateDoc(currentUserRef, userUpdate);
-            showCustomConfirm(shouldBlock ? "تم حظر المستخدم بنجاح." : "تم إلغاء حظر المستخدم بنجاح.", "bi bi-check-circle-fill", () => {});
+            showSpinner();
+            try {
+                const currentUserRef = doc(db, "users", currentUserId);
+                const userUpdate = { blockedUsers: shouldBlock ? arrayUnion(recipientId) : arrayRemove(recipientId) };
+                await updateDoc(currentUserRef, userUpdate);
+                showCustomConfirm(shouldBlock ? "تم حظر المستخدم بنجاح." : "تم إلغاء حظر المستخدم بنجاح.", "bi bi-check-circle-fill", () => {});
+            } finally {
+                hideSpinner();
+            }
         }
     );
 }
@@ -1943,22 +2097,27 @@ window.copyPrivateMessageText = async (msgId) => {
 
 window.togglePrivateReaction = async (msgId, emoji) => {
     if (!currentUserId || !privateChatRoomId) return;
-    const msgRef = doc(db, "private_chats", privateChatRoomId, "messages", msgId);
-    const msgDoc = await getDoc(msgRef);
-    if (!msgDoc.exists()) return;
+    showSpinner();
+    try {
+        const msgRef = doc(db, "private_chats", privateChatRoomId, "messages", msgId);
+        const msgDoc = await getDoc(msgRef);
+        if (!msgDoc.exists()) return;
 
-    const msgData = msgDoc.data();
-    const reactions = msgData.reactions || [];
-    const existingReaction = reactions.find(r => r.userId === currentUserId);
+        const msgData = msgDoc.data();
+        const reactions = msgData.reactions || [];
+        const existingReaction = reactions.find(r => r.userId === currentUserId);
 
-    if (existingReaction) {
-        const newReactions = reactions.filter(r => r.userId !== currentUserId);
-        if (existingReaction.emoji !== emoji) {
-            newReactions.push({ userId: currentUserId, emoji });
+        if (existingReaction) {
+            const newReactions = reactions.filter(r => r.userId !== currentUserId);
+            if (existingReaction.emoji !== emoji) {
+                newReactions.push({ userId: currentUserId, emoji });
+            }
+            await updateDoc(msgRef, { reactions: newReactions });
+        } else {
+            await updateDoc(msgRef, { reactions: arrayUnion({ userId: currentUserId, emoji }) });
         }
-        await updateDoc(msgRef, { reactions: newReactions });
-    } else {
-        await updateDoc(msgRef, { reactions: arrayUnion({ userId: currentUserId, emoji }) });
+    } finally {
+        hideSpinner();
     }
 };
 // --- END: Private Chat Logic ---
@@ -2018,15 +2177,27 @@ async function sendMessage() {
     const text = messageInput.value.trim();
     if (!text || !auth.currentUser) return;
     if (!isVisitor) { const userStatus = await checkUserStatus(auth.currentUser.uid); if (userStatus === 'muted') { showCustomConfirm("أنت مكتوم حاليا ولا يمكنك إرسال رسائل.", "bi bi-mic-mute-fill", () => {}); return; } }
+    
     const messageData = { text, senderName: currentDisplayName, senderId: auth.currentUser.uid, senderRole: currentUserRole, createdAt: serverTimestamp() };
     if (replyToMessage) { messageData.replyTo = replyToMessage; }
-    await addDoc(collection(db, "messages"), messageData);
-    messageInput.value = ""; cancelReply(); messageInput.style.height = 'auto';
+
+    showSpinner();
+    try {
+        await addDoc(collection(db, "messages"), messageData);
+        messageInput.value = ""; 
+        cancelReply(); 
+        messageInput.style.height = 'auto';
+    } catch (error) {
+        console.error("Error sending message:", error);
+    } finally {
+        hideSpinner();
+    }
 }
 
 async function sendVoiceMessage(url, duration) {
     if (!url || !auth.currentUser) return null;
     if (!isVisitor) { const userStatus = await checkUserStatus(auth.currentUser.uid); if (userStatus === 'muted') { showCustomConfirm("أنت مكتوم حاليا ولا يمكنك إرسال رسائل.", "bi bi-mic-mute-fill", () => {}); return null; } }
+    
     const messageData = { 
         type: 'voice',
         text: url,
@@ -2037,8 +2208,17 @@ async function sendVoiceMessage(url, duration) {
         createdAt: serverTimestamp() 
     };
     if (replyToMessage) { messageData.replyTo = replyToMessage; }
-    const docRef = await addDoc(collection(db, "messages"), messageData);
-    cancelReply();
+
+    showSpinner();
+    let docRef = null;
+    try {
+        docRef = await addDoc(collection(db, "messages"), messageData);
+        cancelReply();
+    } catch (error) {
+        console.error("Error sending voice message:", error);
+    } finally {
+        hideSpinner();
+    }
     return docRef;
 }
 
@@ -2143,14 +2323,52 @@ function loadMessages() {
 }
 window.startPrivateChatFromGroup = (targetUserId, targetUserName, targetUserAvatar) => { showPrivateChatView(targetUserId, targetUserName, targetUserAvatar); };
 const pinnedDocRef = doc(db, "chat_config", "pinned_message");
-window.pinMessage = async (messageId) => { if (isVisitor) return; const messageDoc = await getDoc(doc(db, "messages", messageId)); if (!messageDoc.exists()) return; const messageData = messageDoc.data(); await setDoc(pinnedDocRef, { messageId: messageId, text: messageData.type === 'voice' ? '[رسالة صوتية]' : messageData.text, senderName: messageData.senderName, pinnedBy: currentDisplayName, pinnedAt: serverTimestamp() }); };
-unpinButton.addEventListener('click', async (e) => { e.stopPropagation(); if(isVisitor) return; await setDoc(pinnedDocRef, { messageId: null, text: null, senderName: null, pinnedBy: null }); });
+window.pinMessage = async (messageId) => { 
+    if (isVisitor) return; 
+    showSpinner();
+    try {
+        const messageDoc = await getDoc(doc(db, "messages", messageId)); 
+        if (!messageDoc.exists()) return; 
+        const messageData = messageDoc.data(); 
+        await setDoc(pinnedDocRef, { messageId: messageId, text: messageData.type === 'voice' ? '[رسالة صوتية]' : messageData.text, senderName: messageData.senderName, pinnedBy: currentDisplayName, pinnedAt: serverTimestamp() }); 
+    } finally {
+        hideSpinner();
+    }
+};
+unpinButton.addEventListener('click', async (e) => { 
+    e.stopPropagation(); 
+    if(isVisitor) return; 
+    showSpinner();
+    try {
+        await setDoc(pinnedDocRef, { messageId: null, text: null, senderName: null, pinnedBy: null }); 
+    } finally {
+        hideSpinner();
+    }
+});
 function loadPinnedMessage() { onSnapshot(pinnedDocRef, (doc) => { if (doc.exists() && doc.data().text) { const data = doc.data(); pinnedByText.textContent = `تم التثبيت بواسطة: ${data.pinnedBy}`; pinnedMessageText.textContent = `${data.senderName}: ${data.text}`; pinnedMessageContainer.style.display = 'block'; pinnedMessageContainer.dataset.messageId = data.messageId; unpinButton.style.display = (!isVisitor && (currentUserRole === 'developer' || currentUserRole === 'admin')) ? 'block' : 'none'; } else { pinnedMessageContainer.style.display = 'none'; pinnedMessageContainer.dataset.messageId = ''; } }); }
 pinnedMessageClickableArea.addEventListener('click', () => { const messageId = pinnedMessageContainer.dataset.messageId; if (!messageId) return; const messageElement = document.getElementById(`message-${messageId}`); if (messageElement) { messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); messageElement.style.transition = 'background-color 0.5s'; messageElement.style.backgroundColor = 'rgba(255, 255, 0, 0.3)'; setTimeout(() => { messageElement.style.backgroundColor = ''; }, 2000); } });
 window.toggleMuteDropdown = (id) => { event.stopPropagation(); document.querySelectorAll(".mute-dropdown").forEach(d => { if(d.id !== id) d.classList.remove('show-dropdown'); }); document.getElementById(id).classList.toggle("show-dropdown"); }
 window.onclick = (e) => { if (!e.target.matches('.bi-bell-slash-fill')) { document.querySelectorAll(".mute-dropdown.show-dropdown").forEach(d => d.classList.remove('show-dropdown')); } }
-window.muteUser = async (uid, name, min) => { if (!['developer', 'admin'].includes(currentUserRole)) return; await setDoc(doc(db, "users", uid), { mutedUntil: new Date(Date.now() + min * 60000) }, { merge: true }); showCustomConfirm(`تم كتم ${name} لمدة ${min} دقيقة.`, "bi bi-mic-mute-fill", () => {}); };
-window.unmuteUser = async (uid, name) => { if (!['developer', 'admin'].includes(currentUserRole)) return; await setDoc(doc(db, "users", uid), { mutedUntil: null }, { merge: true }); showCustomConfirm(`تم إلغاء كتم ${name}.`, "bi bi-mic-fill", () => {}); };
+window.muteUser = async (uid, name, min) => { 
+    if (!['developer', 'admin'].includes(currentUserRole)) return; 
+    showSpinner();
+    try {
+        await setDoc(doc(db, "users", uid), { mutedUntil: new Date(Date.now() + min * 60000) }, { merge: true }); 
+        showCustomConfirm(`تم كتم ${name} لمدة ${min} دقيقة.`, "bi bi-mic-mute-fill", () => {}); 
+    } finally {
+        hideSpinner();
+    }
+};
+window.unmuteUser = async (uid, name) => { 
+    if (!['developer', 'admin'].includes(currentUserRole)) return; 
+    showSpinner();
+    try {
+        await setDoc(doc(db, "users", uid), { mutedUntil: null }, { merge: true }); 
+        showCustomConfirm(`تم إلغاء كتم ${name}.`, "bi bi-mic-fill", () => {}); 
+    } finally {
+        hideSpinner();
+    }
+};
 function setReplyFromElement(el) { const msgId = el.id.replace('message-', ''); const senderName = el.dataset.senderName; const senderId = el.dataset.senderId; const text = el.dataset.text; const firstLine = text.split('\n')[0]; if(senderName && senderId && text){ replyToMessage = { messageId: msgId, senderName, senderId, text: firstLine }; document.getElementById('reply-preview-sender').textContent = `الرد على ${senderName}`; document.getElementById('reply-preview-text').textContent = firstLine; replyPreview.style.display = 'block'; messageInput.focus(); } }
 window.setReplyWrapper = (msgId) => { event.stopPropagation(); const el = document.getElementById(`message-${msgId}`); if (el) setReplyFromElement(el); };
 window.copyMessageText = async (msgId) => { const textElement = document.querySelector(`#message-${msgId} .message-text`); if (textElement) { try { await navigator.clipboard.writeText(textElement.innerText); alert("تم نسخ النص!"); } catch (err) { console.error('Failed to copy text: ', err); alert("فشل نسخ النص."); } } };
@@ -2166,12 +2384,17 @@ saveEditBtn.addEventListener('click', () => {
     if (!editingMessageInfo) return;
     const newText = editMessageTextarea.value.trim();
     if (newText) {
-        const msgRef = doc(db, editingMessageInfo.collectionPath, editingMessageInfo.id);
-        updateDoc(msgRef, {
-            text: newText,
-            isEdited: true,
-            lastEditedAt: serverTimestamp()
-        });
+        showSpinner();
+        try {
+            const msgRef = doc(db, editingMessageInfo.collectionPath, editingMessageInfo.id);
+            updateDoc(msgRef, {
+                text: newText,
+                isEdited: true,
+                lastEditedAt: serverTimestamp()
+            });
+        } finally {
+            hideSpinner();
+        }
     }
     editMessageModalEl.classList.remove('show');
     editingMessageInfo = null;
@@ -2196,17 +2419,109 @@ window.scrollToMessage = (messageId, prefix = 'message-') => {
 };
 // END: Scroll to Message Function
 
-window.toggleReaction = async (msgId, emoji) => { if (!auth.currentUser) return; const msgRef = doc(db, "messages", msgId); const msgDoc = await getDoc(msgRef); const msgData = msgDoc.data(); const uid = auth.currentUser.uid; const existing = msgData.reactions?.find(r => r.userId === uid); if (existing) { await updateDoc(msgRef, { reactions: arrayRemove(existing) }); if (existing.emoji !== emoji) { await updateDoc(msgRef, { reactions: arrayUnion({ userId: uid, emoji }) }); } } else { await updateDoc(msgRef, { reactions: arrayUnion({ userId: uid, emoji }) }); } };
-window.deleteOwnMessage = async (id) => { showCustomConfirm("هل أنت متأكد من حذف رسالتك؟", "bi bi-trash-fill", async () => await deleteDoc(doc(db, "messages", id))); };
-window.deleteOtherMessage = async (id) => { if (isVisitor || !['developer', 'admin'].includes(currentUserRole)) return; showCustomConfirm("هل أنت متأكد من حذف هذه الرسالة؟", "bi bi-trash-fill", async () => await deleteDoc(doc(db, "messages", id))); };
-window.banUser = async (uid, name) => { if (isVisitor || !['developer', 'admin'].includes(currentUserRole)) return; const userToBan = await getDoc(doc(db, "users", uid)); if (userToBan.exists() && (userToBan.data().role === 'admin' || userToBan.data().role === 'developer')) { showCustomConfirm("لا يمكنك حظر مشرف آخر.", "bi bi-shield-exclamation", () => {}); return; } showCustomConfirm(`هل أنت متأكد من حظر ${name}؟`, "bi bi-slash-circle-fill", async () => { await setDoc(doc(db, "users", uid), { isBanned: true }, { merge: true }); showCustomConfirm(`تم حظر ${name}.`, "bi bi-check-circle-fill", () => {}); })};
-window.toggleAdminRole = async (uid, name) => { if (isVisitor || currentUserRole !== 'developer') return; try { const userDocRef = doc(db, "users", uid); const userDoc = await getDoc(userDocRef); const currentRole = userDoc.exists() ? userDoc.data().role || 'user' : 'user'; const isCurrentlyAdmin = currentRole === 'admin'; const newRole = isCurrentlyAdmin ? 'user' : 'admin'; const confirmationMessage = isCurrentlyAdmin ? `هل تريد إزالة ${name} من الإشراف؟` : `هل تريد ترقية ${name} إلى مشرف؟`; showCustomConfirm(confirmationMessage, "bi bi-shield-shaded", async () => { await setDoc(userDocRef, { role: newRole }, { merge: true }); showCustomConfirm(isCurrentlyAdmin ? `تمت إزالة ${name} من الإشراف.` : `تمت ترقية ${name} إلى مشرف.`, "bi bi-person-check-fill", () => {}); }) } catch (error) { console.error("Error toggling admin role: ", error); } };
+window.toggleReaction = async (msgId, emoji) => { 
+    if (!auth.currentUser) return; 
+    showSpinner();
+    try {
+        const msgRef = doc(db, "messages", msgId); 
+        const msgDoc = await getDoc(msgRef); 
+        const msgData = msgDoc.data(); 
+        const uid = auth.currentUser.uid; 
+        const existing = msgData.reactions?.find(r => r.userId === uid); 
+        if (existing) { 
+            await updateDoc(msgRef, { reactions: arrayRemove(existing) }); 
+            if (existing.emoji !== emoji) { 
+                await updateDoc(msgRef, { reactions: arrayUnion({ userId: uid, emoji }) }); 
+            } 
+        } else { 
+            await updateDoc(msgRef, { reactions: arrayUnion({ userId: uid, emoji }) }); 
+        } 
+    } finally {
+        hideSpinner();
+    }
+};
+window.deleteOwnMessage = async (id) => { showCustomConfirm("هل أنت متأكد من حذف رسالتك؟", "bi bi-trash-fill", async () => {
+    showSpinner();
+    try {
+        await deleteDoc(doc(db, "messages", id))
+    } finally {
+        hideSpinner();
+    }
+}); };
+window.deleteOtherMessage = async (id) => { 
+    if (isVisitor || !['developer', 'admin'].includes(currentUserRole)) return; 
+    showCustomConfirm("هل أنت متأكد من حذف هذه الرسالة؟", "bi bi-trash-fill", async () => {
+        showSpinner();
+        try {
+            await deleteDoc(doc(db, "messages", id))
+        } finally {
+            hideSpinner();
+        }
+    }); 
+};
+window.banUser = async (uid, name) => { 
+    if (isVisitor || !['developer', 'admin'].includes(currentUserRole)) return; 
+    const userToBan = await getDoc(doc(db, "users", uid)); 
+    if (userToBan.exists() && (userToBan.data().role === 'admin' || userToBan.data().role === 'developer')) { 
+        showCustomConfirm("لا يمكنك حظر مشرف آخر.", "bi bi-shield-exclamation", () => {}); 
+        return; 
+    } 
+    showCustomConfirm(`هل أنت متأكد من حظر ${name}؟`, "bi bi-slash-circle-fill", async () => { 
+        showSpinner();
+        try {
+            await setDoc(doc(db, "users", uid), { isBanned: true }, { merge: true }); 
+            showCustomConfirm(`تم حظر ${name}.`, "bi bi-check-circle-fill", () => {}); 
+        } finally {
+            hideSpinner();
+        }
+    })
+};
+window.toggleAdminRole = async (uid, name) => { 
+    if (isVisitor || currentUserRole !== 'developer') return; 
+    try { 
+        const userDocRef = doc(db, "users", uid); 
+        const userDoc = await getDoc(userDocRef); 
+        const currentRole = userDoc.exists() ? userDoc.data().role || 'user' : 'user'; 
+        const isCurrentlyAdmin = currentRole === 'admin'; 
+        const newRole = isCurrentlyAdmin ? 'user' : 'admin'; 
+        const confirmationMessage = isCurrentlyAdmin ? `هل تريد إزالة ${name} من الإشراف؟` : `هل تريد ترقية ${name} إلى مشرف؟`; 
+        showCustomConfirm(confirmationMessage, "bi bi-shield-shaded", async () => { 
+            showSpinner();
+            try {
+                await setDoc(userDocRef, { role: newRole }, { merge: true }); 
+                showCustomConfirm(isCurrentlyAdmin ? `تمت إزالة ${name} من الإشراف.` : `تمت ترقية ${name} إلى مشرف.`, "bi bi-person-check-fill", () => {}); 
+            } finally {
+                hideSpinner();
+            }
+        }) 
+    } catch (error) { 
+        console.error("Error toggling admin role: ", error); 
+    } 
+};
 // --- END: Public Chat Logic ---
 
 // --- START: App Lock Logic ---
 function initializeAppLock() { const lockData = getLockData(); if (!lockData.enabled) return; const lastUnlock = localStorage.getItem('app_last_unlock') || 0; const timeSinceUnlock = Date.now() - lastUnlock; if (timeSinceUnlock >= RELOCK_TIME) { appLockOverlay.style.display = 'flex'; } }
 function getLockData() { try { return JSON.parse(localStorage.getItem('app_lock_config')) || { enabled: false, passcode: null }; } catch (e) { return { enabled: false, passcode: null }; } }
-function handleUnlock() { const enteredPasscode = passcodeInput.value; const lockData = getLockData(); passcodeError.style.display = 'none'; if (enteredPasscode === lockData.passcode) { localStorage.setItem('app_last_unlock', Date.now()); appLockOverlay.style.display = 'none'; passcodeInput.value = ''; } else { passcodeError.style.display = 'block'; passcodeInput.classList.add('is-invalid'); setTimeout(() => passcodeInput.classList.remove('is-invalid'), 1000); } }
+function handleUnlock() { 
+    showSpinner();
+    try {
+        const enteredPasscode = passcodeInput.value; 
+        const lockData = getLockData(); 
+        passcodeError.style.display = 'none'; 
+        if (enteredPasscode === lockData.passcode) { 
+            localStorage.setItem('app_last_unlock', Date.now()); 
+            appLockOverlay.style.display = 'none'; 
+            passcodeInput.value = ''; 
+        } else { 
+            passcodeError.style.display = 'block'; 
+            passcodeInput.classList.add('is-invalid'); 
+            setTimeout(() => passcodeInput.classList.remove('is-invalid'), 1000); 
+        } 
+    } finally {
+        hideSpinner();
+    }
+}
 unlockBtn.addEventListener('click', handleUnlock);
 passcodeInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') handleUnlock(); });
 // --- END: App Lock Logic ---

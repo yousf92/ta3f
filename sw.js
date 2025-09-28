@@ -1,3 +1,19 @@
+// --- START: Added Spinner Functions ---
+function showSpinner() {
+    const spinner = document.getElementById('loading-spinner-overlay');
+    if (spinner) {
+        spinner.classList.add('show');
+    }
+}
+
+function hideSpinner() {
+    const spinner = document.getElementById('loading-spinner-overlay');
+    if (spinner) {
+        spinner.classList.remove('show');
+    }
+}
+// --- END: Added Spinner Functions ---
+
 // Define the cache name and version. A new version will trigger the 'activate' event.
 const CACHE_NAME = 'my-app-cache-v3';
 
@@ -74,4 +90,3 @@ self.addEventListener('activate', (event) => {
     })
   );
 });
-
