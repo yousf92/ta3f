@@ -1,400 +1,0 @@
-<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>الرئيسية | لا أبرح حتى أبلغ</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- START: Added meta tags to prevent caching -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-    <!-- END: Added meta tags to prevent caching -->
-    <!-- START: Added for Commitment Document -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    <!-- END: Added for Commitment Document -->
-    <link rel="stylesheet" href="main.css">
-</head>
-<body style="visibility: hidden;">
-    <div id="app-lock-overlay">
-        <div class="lock-container">
-            <i class="bi bi-shield-lock-fill icon"></i>
-            <h5>التطبيق مقفل</h5>
-            <p class="text-secondary small">أدخل رمز المرور للمتابعة</p>
-            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="form-control" id="passcode-input" placeholder="----">
-            <div id="passcode-error">رمز المرور غير صحيح</div>
-            <button id="unlock-btn" class="btn btn-primary mt-2">فتح القفل</button>
-        </div>
-    </div>
-
-    <div id="home-page" class="page active">
-        <div class="home-container">
-            <header class="top-header">
-                <div class="header-icons">
-                    <i class="bi bi-trophy-fill" data-bs-toggle="modal" data-bs-target="#achievementsModal"></i>
-                    <i class="bi bi-bar-chart-steps" data-bs-toggle="modal" data-bs-target="#leaderboardModal"></i>
-                    <div class="notification-icon-wrapper" data-bs-toggle="modal" data-bs-target="#notifications-modal">
-                        <i class="bi bi-bell-fill"></i>
-                        <span class="notification-badge"></span>
-                    </div>
-                    <a href="settings.html"><i class="bi bi-person-circle"></i></a>
-                </div>
-                <div class="welcome-message">
-                    <h5 id="welcome-user"></h5>
-                    <p id="current-date"></p>
-                </div>
-            </header>
-            <main class="content-area">
-                <div class="progress-timer-card">
-                    <div class="image-background-overlay"></div>
-                    <img class="image-background" id="counter-image-bg" src="" alt="Background">
-                    <div class="timer-settings-icon d-none"><i class="bi bi-gear-fill"></i></div>
-                    <div class="progress-rows-container">
-                        <div class="progress-row">
-                            <div class="progress-bar-fill" id="days-fill"></div>
-                            <div class="row-content">
-                                <span class="time-label"><span id="days-value">0</span> أيام</span>
-                                <i class="bi bi-calendar-check-fill time-icon"></i>
-                            </div>
-                        </div>
-                        <div class="progress-row">
-                            <div class="progress-bar-fill" id="hours-fill"></div>
-                            <div class="row-content">
-                                <span class="time-label"><span id="hours-value">0</span> ساعات</span>
-                                <i class="bi bi-clock-fill time-icon"></i>
-                            </div>
-                        </div>
-                        <div class="progress-row">
-                            <div class="progress-bar-fill" id="minutes-fill"></div>
-                            <div class="row-content">
-                                <span class="time-label"><span id="minutes-value">0</span> دقائق</span>
-                                <i class="bi bi-clock-history time-icon"></i>
-                            </div>
-                        </div>
-                        <div class="progress-row">
-                            <div class="progress-bar-fill" id="seconds-fill"></div>
-                            <div class="row-content">
-                                <span class="time-label"><span id="seconds-value">0</span> ثواني</span>
-                                <i class="bi bi-hourglass-split time-icon"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                 <div id="inspiration-container" class="mb-3">
-                    <button id="inspiration-btn" class="action-button" style="justify-content: center; text-align: center; gap: 10px; font-weight: 700; width: 100%;">
-                        <span>🔥عندي رغبة شديدة،أعطني حلا جذريا🔥</span>
-                    </button>
-                    <div id="inspiration-display" class="p-3 mt-2 d-none" style="background-color: var(--card-background); border-radius: 15px; border: 1px solid var(--border-color);">
-                        <p id="inspiration-text" class="mb-0"></p>
-                    </div>
-                </div>
-
-                <!-- START: New Salaf Story Button -->
-                <div id="salaf-story-container" class="mb-3">
-                    <button id="salaf-story-btn" class="action-button" style="justify-content: center; text-align: center; gap: 10px; font-weight: 700; width: 100%; background: linear-gradient(135deg, #4a90e2, #50e3c2); border: 1px solid #4a90e2;">
-                        <span>📖 عطني جرعة إيمانية من قصص السلف</span>
-                    </button>
-                    <div id="salaf-story-display" class="p-3 mt-2 d-none" style="background-color: var(--card-background); border-radius: 15px; border: 1px solid var(--border-color);">
-                        <p id="salaf-story-text" class="mb-0"></p>
-                    </div>
-                </div>
-                <!-- END: New Salaf Story Button -->
-
-                <button id="start-timer-btn" class="btn btn-success btn-lg w-100 mb-3 d-none">بدء العداد</button>
-                <button id="najda-button" class="action-button najda-style">
-                    <i class="bi bi-fire"></i>
-                    <span>النجدة!</span>
-                    <div class="fire-alarm">
-                        <div class="fire-alarm-dome"></div>
-                        <div class="fire-alarm-base"></div>
-                    </div>
-                </button>
-                <!-- START: Added Button -->
-                <button id="commitment-btn" class="action-button commitment-style">
-                    <i class="bi bi-file-text-fill"></i>
-                    <span>وثيقة الإلتزام</span>
-                </button>
-                <!-- END: Added Button -->
-
-            </main>
-            <nav class="bottom-nav">
-                <a href="main.html" class="nav-item active"><i class="bi bi-house-door-fill"></i><span>الرئيسية</span></a>
-                <a href="diaries.html" class="nav-item"><i class="bi bi-book-fill"></i><span>اليوميات</span></a>
-                <a href="articles.html" class="nav-item"><i class="bi bi-check2-square"></i><span>العادات</span></a>
-                <a href="chat.html" class="nav-item special-item">
-                    <div class="icon-background"><i class="bi bi-chat-dots-fill"></i></div>
-                    <span>دردشة</span>
-                    <span class="chat-notification-badge"></span>
-                </a>
-                <a href="follow-up.html" class="nav-item"><i class="bi bi-signpost-split-fill"></i><span>المتابعة</span></a>
-                <a href="library.html" class="nav-item"><i class="bi bi-collection-fill"></i><span>المكتبة</span></a>
-                <a href="settings.html" class="nav-item"><i class="bi bi-gear-fill"></i><span>الاعدادات</span></a>
-            </nav>
-        </div>
-    </div>
-    
-    <div id="breathing-page" class="page" style="background: linear-gradient(to top, #28b485, #7ed56f); justify-content: center; align-items: center; text-align: center; color: white; padding: 1rem;">
-        <i class="bi bi-x-lg" id="close-breathing-btn" style="position: absolute; top: 20px; right: 20px; font-size: 1.8rem; cursor: pointer; z-index: 10;"></i>
-        <div id="breathing-circle-container"><div id="breathing-circle"></div></div>
-        <h1 id="breathing-text" style="font-size: 4rem; margin-top: 2rem; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">شهيق</h1>
-        <div id="breathing-timer" style="font-size: 1.5rem; color: white; margin-top: 1rem; font-weight: bold;"></div>
-        <button id="skip-to-quote-btn" class="btn btn-outline-light mt-4">الانتقال إلى الاقتباس <i class="bi bi-arrow-left-short"></i></button>
-        <p style="font-size: 1.1rem; max-width: 300px; margin-top: 1.5rem;">خذ دقيقة من وقتك للتنفس حيث يساعدك على تهدئة عقلك</p>
-    </div>
-
-    <div id="quote-page" class="page">
-        <div class="top-indicator-bar"></div>
-        <i class="bi bi-x-lg" id="close-quote-btn"></i>
-        <div class="quote-box">
-            <p id="quote-text"></p>
-        </div>
-    </div>
-
-    <!-- START: Commitment Document Page -->
-    <div id="commitment-document-page" class="page">
-        <button id="back-to-home-btn" style="position: fixed; top: 20px; left: 20px; z-index: 1000; background: rgba(0,0,0,0.2); border: none; color: #333; border-radius: 50%; width: 44px; height: 44px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer;">
-            <i class="bi bi-arrow-right-circle-fill"></i>
-        </button>
-        
-        <!-- Page 1: Create Form -->
-        <div id="form-page">
-            <div class="min-h-screen py-8">
-                <div class="container mx-auto p-4 md:p-8 max-w-4xl">
-                    <header class="text-center mb-8">
-                        <h1 class="text-4xl md:text-5xl font-bold main-title mb-2">وثيقة الإلتزام</h1>
-                        <p class="text-lg text-gray-600">راجع الوثيقة يومياً، ستساعدك كثيراً على تذكير وتحفيز نفسك باستمرار!</p>
-                    </header>
-                    
-                    <form id="commitment-form">
-                        <div class="form-card"><label for="damages" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>ما هي أضرار الإدمان التي أصابتك؟</label><p class="text-gray-500 mb-4">اكتب أضرار حقيقية أثرت بك وجعلتك تفكر جديا بالتعافي، أضرار على صحتك الدينية والنفسية والبدنية والاجتماعية والعقلية.</p><textarea id="damages" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"></textarea></div>
-                        <div class="form-card"><label for="fears" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"></path></svg>ماهي مخاوفك الشخصية من ترك هذه العادة؟</label><p class="text-gray-500 mb-4">اكتب مخاوفك التي توهمك بأنك تحتاج لتلك العادة مثل أنه لا حل إلا بالزواج أو أن تركها يسبب خلل جنسي أو أن التعافي مستحيل.</p><textarea id="fears" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"></textarea></div>
-                        <div class="form-card"><label for="responses" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.311a7.5 7.5 0 0 1-7.5 0c-1.421-.492-2.682-.998-3.624-1.516a6.002 6.002 0 0 1-1.49-1.84c-.31-1.024-.23-2.111.22-3.084.45-.972 1.165-1.823 2.06-2.502a12.022 12.022 0 0 1 1.732-1.041"></path></svg>بماذا ترد على مخاوفك بشكل منطقي؟</label><p class="text-gray-500 mb-4">اكتب ما تعرفه من ردود منطقية لتذكر بها نفسك عندما تنسى أو تضعف.</p><textarea id="responses" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"></textarea></div>
-                        <div class="form-card"><label for="benefits" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-6.75c-.621 0-1.125.504-1.125 1.125v3.375m9 0h-9"></path></svg>ماهي فوائد التعافي التي تطمح لاكتسابها؟</label><p class="text-gray-500 mb-4">اكتب فوائد حقيقية وواقعية يمكن اكتسابها تدريجيا بالتعافي.</p><textarea id="benefits" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"></textarea></div>
-                        <div class="form-card"><label for="escape-plan" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"></path></svg>ماهي خطة هروبك عند هجوم الرغبة الملحة؟</label><p class="text-gray-500 mb-4">ضع عادات سريعة وقصيرة، مثل تجنب الهاتف، ومغادرة الغرفة، تمارين رياضية، استحمام، وغيرها من عادات تشغلك عن التفكير بالزلل.</p><textarea id="escape-plan" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"></textarea></div>
-                        <div class="form-card"><label for="message" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"></path></svg>اكتب رسالة منك لنفسك.</label><p class="text-gray-500 mb-4">تمهل قليلا وتفكر.. اجعلها مؤثرة تلامس عقلك وقلبك وروحك..</p><textarea id="message" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"></textarea></div>
-                        <button type="submit" class="w-full btn-save text-white font-bold py-4 px-4 rounded-lg text-xl">حفظ</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Page 2: View Document -->
-        <div id="document-page" class="hidden">
-            <div class="min-h-screen flex flex-col justify-center items-center py-8 px-4">
-                 <div class="document-container">
-                    <div id="document-content" class="text-justify">
-                        <p class="text-center text-2xl font-bold mb-6">بسم الله الرحمن الرحيم</p>
-                        <p class="mb-5">بإدراكي العميق لمعاناة حياتي تحت وطأة الإدمان وآثاره السلبية على صحتي وعلاقاتي ومستقبلي، أقر وألتزم أمام الله ثم نفسي بهذه الوثيقة لتحقيق التعافي والعودة إلى حياة مليئة بالأمل والإنجاز.</p>
-                        <p class="mb-5">أقر بأن الإدمان قد ترك أثراً بالغاً في حياتي بكثير من الأضرار أبرزها: <strong id="damages-output" class="font-semibold"></strong></p>
-                        <p class="mb-5">أعلم أن قرار التغيير ليس سهلا لكن سأتحمل الصعاب بإذن الله لأني أريد أن أصبح إنسانا جديدا مما يستلزم أن أطرح بكل شفافية مخاوفي الشخصية من ترك هذه العادة المدمرة وهذه المخاوف تتمثل بـ: <strong id="fears-output" class="font-semibold"></strong></p>
-                        <p class="mb-5">ولكن جميع هذه المخاوف أوهام كاذبة وحبال يتوجب علي قطعها لأزيح صخرة الإدمان من حياتي و سأرد عليها منطقيا بالتالي: <strong id="responses-output" class="font-semibold"></strong></p>
-                        <p class="mb-5">إن التعافي بالنسبة لي هو رحلة نحو استعادة الذات والعيش بكرامة ومسؤولية، وأطمح من خلاله إلى تحقيق الفوائد التالية: <strong id="benefits-output" class="font-semibold"></strong></p>
-                        <p class="mb-5">وفي سبيل كل ما سبق ولأني علمت يقينا بأن الدماغ يكون بحالة سكر وضعف اتخاذ القرارات الصحيحة عند هجوم الرغبة الملحة وأعراض الانسحاب ولأن التعافي يستحق فإنني سألتزم بخطة الهروب التالية مباشرة عند ظهور أية بوادر إدمانية حيث سأقوم بالتالي: <strong id="escape-plan-output" class="font-semibold"></strong></p>
-                        <p class="mb-5">وختاماً فهذه رسالة إلى نفسي التواقة للصلاح والإصلاح إلى تلك النفس الطيبة التائبة لمولاها جل وعلا: <strong id="message-output" class="font-semibold"></strong></p>
-                        <div class="mt-12 text-left"><p class="font-bold">التوقيع: <span id="user-signature"></span></p><p class="font-bold">التاريخ: <span id="current-date-doc"></span></p></div>
-                    </div>
-                </div>
-                <div class="flex justify-center items-center space-x-4 space-x-reverse py-8">
-                    <button id="edit-btn" class="flex items-center justify-center btn-edit text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg><span>تعديل</span></button>
-                    <button id="delete-btn" class="flex items-center justify-center btn-delete text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg><span>حذف</span></button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Page 3: Edit Form -->
-        <div id="edit-page" class="hidden">
-            <div class="min-h-screen py-8">
-                <div class="container mx-auto p-4 md:p-8 max-w-4xl">
-                     <header class="text-center mb-8">
-                        <h1 class="text-4xl md:text-5xl font-bold edit-title mb-2">تعديل وثيقة الإلتزام</h1>
-                        <p class="text-lg text-gray-600">قم بمراجعة وتحديث التزاماتك وأهدافك.</p>
-                    </header>
-                    <form id="commitment-form-edit">
-                        <div class="form-card"><label for="edit-damages" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>ما هي أضرار الإدمان التي أصابتك؟</label><p class="text-gray-500 mb-4">اكتب أضرار حقيقية أثرت بك وجعلتك تفكر جديا بالتعافي، أضرار على صحتك الدينية والنفسية والبدنية والاجتماعية والعقلية.</p><textarea id="edit-damages" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea></div>
-                        <div class="form-card"><label for="edit-fears" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"></path></svg>ماهي مخاوفك الشخصية من ترك هذه العادة؟</label><p class="text-gray-500 mb-4">اكتب مخاوفك التي توهمك بأنك تحتاج لتلك العادة مثل أنه لا حل إلا بالزواج أو أن تركها يسبب خلل جنسي أو أن التعافي مستحيل.</p><textarea id="edit-fears" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea></div>
-                        <div class="form-card"><label for="edit-responses" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.311a7.5 7.5 0 0 1-7.5 0c-1.421-.492-2.682-.998-3.624-1.516a6.002 6.002 0 0 1-1.49-1.84c-.31-1.024-.23-2.111.22-3.084.45-.972 1.165-1.823 2.06-2.502a12.022 12.022 0 0 1 1.732-1.041"></path></svg>بماذا ترد على مخاوفك بشكل منطقي؟</label><p class="text-gray-500 mb-4">اكتب ما تعرفه من ردود منطقية لتذكر بها نفسك عندما تنسى أو تضعف.</p><textarea id="edit-responses" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea></div>
-                        <div class="form-card"><label for="edit-benefits" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-6.75c-.621 0-1.125.504-1.125 1.125v3.375m9 0h-9"></path></svg>ماهي فوائد التعافي التي تطمح لاكتسابها؟</label><p class="text-gray-500 mb-4">اكتب فوائد حقيقية وواقعية يمكن اكتسابها تدريجيا بالتعافي.</p><textarea id="edit-benefits" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea></div>
-                        <div class="form-card"><label for="edit-escape-plan" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"></path></svg>ماهي خطة هروبك عند هجوم الرغبة الملحة؟</label><p class="text-gray-500 mb-4">ضع عادات سريعة وقصيرة، مثل تجنب الهاتف، ومغادرة الغرفة، تمارين رياضية، استحمام، وغيرها من عادات تشغلك عن التفكير بالزلل.</p><textarea id="edit-escape-plan" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea></div>
-                        <div class="form-card"><label for="edit-message" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"></path></svg>اكتب رسالة منك لنفسك.</label><p class="text-gray-500 mb-4">تمهل قليلا وتفكر.. اجعلها مؤثرة تلامس عقلك وقلبك وروحك..</p><textarea id="edit-message" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea></div>
-                        
-                        <button type="submit" class="w-full btn-update text-white font-bold py-4 px-4 rounded-lg text-xl">حفظ التعديلات</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- END: Commitment Document Page -->
-
-    <div class="modal-overlay" id="settings-modal-overlay">
-        <div class="modal-content-custom" id="settings-modal-content">
-            <header class="modal-header-custom"><h5>اعدادات العداد</h5><i class="bi bi-x-lg" id="close-settings-button"></i></header>
-            <div class="modal-body-custom">
-                <button class="action-button" id="reset-timer-button"><span>تصفير العداد</span><div class="icon-container yellow"><i class="bi bi-arrow-counterclockwise"></i></div></button>
-                <button class="action-button" id="set-date-button"><span>تعيين تاريخ بداية جديد</span><div class="icon-container blue"><i class="bi bi-calendar-plus-fill"></i></div></button>
-                <div id="developer-background-options" class="d-none">
-                    <button class="action-button" id="set-image-button">
-                        <span>تعيين صورة خلفية</span>
-                        <div class="icon-container green"><i class="bi bi-image"></i></div>
-                    </button>
-                    <button class="action-button" id="remove-background-button">
-                        <span>إزالة الخلفية</span>
-                        <div class="icon-container red"><i class="bi bi-trash-fill"></i></div>
-                    </button>
-                </div>
-                <input type="datetime-local" id="date-time-picker" style="opacity: 0; position: absolute; left: -9999px; width: 1px; height: 1px;">
-            </div>
-        </div>
-    </div>
-    <div class="modal-overlay" id="confirm-reset-modal">
-        <div class="modal-content-custom">
-            <div class="confirm-modal-body"><div class="confirm-icon"><i class="bi bi-arrow-counterclockwise"></i></div><p>هل أنت متأكد من تصفير العداد؟ سيتم حذف جميع الأوسمة التي حصلت عليها.</p></div>
-            <div class="confirm-modal-footer"><button class="confirm-btn confirm-btn-cancel" id="cancel-reset-button">رجوع</button><button class="confirm-btn confirm-btn-accept" id="confirm-reset-action-button">تصفير</button></div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="notifications-modal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">الإشعارات</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="notifications-list"></div>
-                <div class="modal-footer">
-                    <button id="open-send-modal-btn" type="button" class="btn btn-success d-none" data-bs-toggle="modal" data-bs-target="#send-notification-modal">إرسال إشعار جديد</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="send-notification-modal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">إرسال إشعار جديد</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="notification-title" class="form-label">العنوان</label>
-                        <input type="text" class="form-control" id="notification-title" placeholder="عنوان الإشعار">
-                    </div>
-                    <div class="mb-3">
-                        <label for="notification-message" class="form-label">الرسالة</label>
-                        <textarea class="form-control" id="notification-message" rows="4" placeholder="محتوى الإشعار"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="button" class="btn btn-primary" id="send-notification-btn">إرسال</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- START: Achievements Modals -->
-    <div class="modal fade" id="achievementsModal" tabindex="-1" aria-labelledby="achievementsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="achievementsModalLabel">سجل الأوسمة</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="achievements-grid">
-                        <!-- Achievement cards will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="congratsAchievementModal" tabindex="-1" aria-labelledby="congratsAchievementModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body" id="congrats-modal-body">
-                    <div id="congrats-icon"><i class="bi bi-trophy-fill"></i></div>
-                    <h5 id="congrats-user-text" class="mb-1"></h5>
-                    <p id="congrats-text" class="text-secondary"></p>
-                    <button type="button" class="btn btn-primary mt-3" data-bs-dismiss="modal">رائع!</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- END: Achievements Modals -->
-
-    <!-- START: Leaderboard Modal -->
-    <div class="modal fade" id="leaderboardModal" tabindex="-1" aria-labelledby="leaderboardModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header flex-column align-items-stretch p-2">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <h5 class="modal-title" id="leaderboardModalLabel">🏆 لوحة الصدارة</h5>
-                        <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div id="leaderboard-tabs-container" class="d-none w-100 mt-2">
-                        <ul class="nav nav-tabs" id="leaderboardTab" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="leaderboard-list-tab" data-bs-toggle="tab" data-bs-target="#leaderboard-list-pane" type="button" role="tab" aria-controls="leaderboard-list-pane" aria-selected="true">لوحة الصدارة</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="banned-list-tab" data-bs-toggle="tab" data-bs-target="#banned-list-pane" type="button" role="tab" aria-controls="banned-list-pane" aria-selected="false">المحظورون</button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="modal-body p-0" id="leaderboard-body-container">
-                     <div class="tab-content" id="leaderboardTabContent">
-                        <div class="tab-pane fade show active p-3" id="leaderboard-list-pane" role="tabpanel" tabindex="0">
-                            <!-- Leaderboard content will be injected here -->
-                        </div>
-                        <div class="tab-pane fade p-3" id="banned-list-pane" role="tabpanel" tabindex="0">
-                            <!-- Banned users list will be injected here -->
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer justify-content-center p-0" id="leaderboard-footer-user-rank">
-                    <!-- User's rank will be injected here -->
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- END: Leaderboard Modal -->
-
-    <!-- START: User Achievements Modal -->
-    <div class="modal fade" id="userAchievementsModal" tabindex="-1" aria-labelledby="userAchievementsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="userAchievementsModalLabel">أوسمة المستخدم</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="user-achievements-grid">
-                        <!-- User achievements will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- END: User Achievements Modal -->
-
-
-    <input type="file" accept="image/*" id="image-file-picker" style="display: none;">
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="main.js" type="module"></script>
-    
-    <!-- Loading Spinner -->
-    <div id="loading-spinner-overlay" class="loading-spinner-overlay">
-        <div class="loading-spinner"></div>
-    </div>
-    <!-- End Loading Spinner -->
-    
-</body>
-</html>
