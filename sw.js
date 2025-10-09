@@ -15,7 +15,7 @@ function hideSpinner() {
 // --- END: Added Spinner Functions ---
 
 // Define the cache name and version. A new version will trigger the 'activate' event.
-const CACHE_NAME = 'my-app-cache-v4';
+const CACHE_NAME = 'my-app-cache-v5';
 
 // List of all the files and assets to be cached for offline access.
 const FILES_TO_CACHE = [
