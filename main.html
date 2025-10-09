@@ -18,6 +18,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <!-- END: Added for Commitment Document -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary-color: #00a884;
@@ -741,6 +742,151 @@
             }
         }
         /* END: Loading Spinner Styles */
+
+        /* START: Sleep Improvement Styles */
+        .action-button.sleep-style {
+            background: linear-gradient(135deg, #2c3e50, #4b79a1);
+            color: white;
+            border: 1px solid rgba(75, 121, 161, 0.7);
+            justify-content: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .action-button.sleep-style i {
+            font-size: 1.5rem;
+        }
+        #sleep-improvement-page {
+            background-color: var(--background-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1100;
+            transform: translateX(100%);
+            transition: transform 0.4s ease-in-out;
+            display: flex !important;
+            flex-direction: column;
+        }
+        #sleep-improvement-page.active {
+            transform: translateX(0);
+        }
+        .sleep-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--card-background);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+            flex-shrink: 0;
+        }
+        .sleep-header h5 {
+            margin: 0;
+            font-weight: 700;
+        }
+        #back-to-home-from-sleep-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .sleep-content-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        .sleep-card {
+            background-color: var(--card-background);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .sleep-card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        .time-input-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .time-input-container {
+            flex: 1;
+        }
+        .time-input-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+        }
+        .time-input-container input[type="time"] {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1.1rem;
+        }
+        .user-option-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-align: center;
+            width: 100%;
+        }
+        .user-option-btn:hover {
+            background-color: #008a70;
+        }
+        .daily-question-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .daily-question-options .user-option-btn {
+            flex-grow: 1;
+            width: auto;
+        }
+        #sleep-duration-display {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--secondary-text-color);
+            margin-bottom: 1.5rem;
+        }
+        #sleep-chart-container {
+            padding: 1rem;
+            background-color: var(--card-background);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            height: 300px;
+        }
+        #weekly-analysis-container {
+            min-height: 150px;
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+        .last-updated-text {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 1rem;
+            text-align: left;
+        }
+        .hidden-section {
+            display: none;
+        }
+        /* END: Sleep Improvement Styles */
     </style>
 </head>
 <body style="visibility: hidden;">
@@ -843,6 +989,13 @@
                     <span>وثيقة الإلتزام</span>
                 </button>
                 <!-- END: Added Button -->
+
+                <!-- START: New Sleep AI Button -->
+                <button id="sleep-ai-btn" class="action-button sleep-style">
+                    <i class="bi bi-moon-stars-fill"></i>
+                    <span>نومك مخربط؟ تعال أساعدك</span>
+                </button>
+                <!-- END: New Sleep AI Button -->
 
             </main>
             <nav class="bottom-nav">
@@ -952,6 +1105,63 @@
         </div>
     </div>
     <!-- END: Commitment Document Page -->
+
+    <!-- START: Sleep Improvement Page -->
+    <div id="sleep-improvement-page" class="page">
+        <header class="sleep-header">
+            <i class="bi bi-arrow-right" id="back-to-home-from-sleep-btn"></i>
+            <h5>مساعد النوم الذكي</h5>
+            <div style="width: 24px;"></div> <!-- Spacer -->
+        </header>
+        <main class="sleep-content-area">
+            <!-- Section for daily sleep logging -->
+            <div id="sleep-log-section" class="sleep-card">
+                <h2 class="sleep-card-title">تسجيل نوم الليلة</h2>
+                <div class="time-input-group">
+                    <div class="time-input-container">
+                        <label for="sleep-time-input">متى نمت تقريبا</label>
+                        <input type="time" id="sleep-time-input">
+                    </div>
+                    <div class="time-input-container">
+                        <label for="wake-time-input">ومتى صحيت</label>
+                        <input type="time" id="wake-time-input">
+                    </div>
+                </div>
+                <p class="text-secondary small text-center mb-3">ملاحظة: AM يعني صباحاً (من 12:00 منتصف الليل إلى 11:59 صباحاً)، و PM يعني مساءً (من 12:00 ظهراً إلى 11:59 مساءً).</p>
+                <div id="sleep-duration-display" class="hidden-section"></div>
+                <div class="d-flex gap-2">
+                    <button id="cancel-sleep-time-btn" class="user-option-btn" style="background-color: var(--danger-color); flex-basis: 30%;">إلغاء</button>
+                    <button id="submit-sleep-time-btn" class="user-option-btn" style="flex-grow: 1;">تسجيل وحساب المدة</button>
+                </div>
+            </div>
+
+            <!-- Section for the dynamic daily question -->
+            <div id="daily-question-section" class="sleep-card hidden-section">
+                <h2 class="sleep-card-title" id="daily-question-text"></h2>
+                <div class="daily-question-options" id="daily-question-options-container">
+                    <!-- Options will be injected here -->
+                </div>
+            </div>
+
+            <!-- Section for analysis and chart -->
+            <div id="sleep-analysis-section" class="hidden-section">
+                <div class="sleep-card">
+                    <h2 class="sleep-card-title">ملخص نومك آخر اسبوع</h2>
+                    <div id="sleep-chart-container">
+                        <canvas id="sleepChart"></canvas>
+                    </div>
+                </div>
+                <div class="sleep-card">
+                    <h2 class="sleep-card-title">تحليل نومك الاسبوعي</h2>
+                    <div id="weekly-analysis-container">
+                        <!-- AI weekly analysis will be injected here -->
+                    </div>
+                     <p class="last-updated-text" id="analysis-last-updated"></p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- END: Sleep Improvement Page -->
 
     <div class="modal-overlay" id="settings-modal-overlay">
         <div class="modal-content-custom" id="settings-modal-content">
@@ -1343,9 +1553,11 @@
             showSpinner();
             try {
                 let currentUserRole = 'user';
-                const currentUserDoc = await getDoc(doc(db, "users", user.uid));
-                if (currentUserDoc.exists()) {
-                    currentUserRole = currentUserDoc.data().role || 'user';
+                if (!user.isAnonymous) {
+                    const currentUserDoc = await getDoc(doc(db, "users", user.uid));
+                    if (currentUserDoc.exists()) {
+                        currentUserRole = currentUserDoc.data().role || 'user';
+                    }
                 }
 
                 if (currentUserRole === 'developer') {
@@ -1430,7 +1642,12 @@
                 }
 
                 // Inner function to calculate and display user's rank
-                const findUserRank = () => {
+                const findUserRank = async () => {
+                    if (user.isAnonymous) {
+                         leaderboardFooter.innerHTML = 'سجل دخولك لتظهر في الترتيب';
+                         return;
+                    }
+                    const currentUserDoc = await getDoc(doc(db, "users", user.uid));
                     if (!currentUserDoc.exists() || !currentUserDoc.data().timerStartDate) {
                         leaderboardFooter.innerHTML = 'ابدأ العداد لتظهر في الترتيب';
                         return;
@@ -1802,7 +2019,6 @@
                                 updateTimerDisplay(0, 0, 0, 0);
                             }
                             loadNotifications(null);
-                            initializeModalListeners();
                         } else {
                             welcomeUserEl.textContent = `مرحبا ${user.displayName || 'المستخدم'}`;
                             const userDocRef = doc(db, "users", user.uid);
@@ -1832,8 +2048,8 @@
                                 updateTimerDisplay(0,0,0,0);
                             }
                             loadNotifications(user.uid);
-                            initializeModalListeners();
                         }
+                         initializeModalListeners();
                     } else {
                         window.location.href = 'index.html';
                     }
@@ -1866,10 +2082,12 @@
             async function loadNotifications(userId) {
                 const notificationsList = document.getElementById('notifications-list');
                 let lastSeenTimestamp = new Date(0);
+                const isUserRegistered = userId && auth.currentUser && !auth.currentUser.isAnonymous;
+
 
                 showSpinner();
                 try {
-                    if (userId) {
+                    if (isUserRegistered) {
                         const userDoc = await getDoc(doc(db, "users", userId));
                         lastSeenTimestamp = userDoc.data()?.lastSeenNotificationTimestamp?.toDate() || new Date(0);
                     }
@@ -1883,7 +2101,7 @@
                             return;
                         }
 
-                        if (userId) {
+                        if (isUserRegistered) {
                             latestNotificationTimestamp = snapshot.docs[0].data().createdAt?.toDate();
                             notificationBadge.style.display = latestNotificationTimestamp > lastSeenTimestamp ? 'block' : 'none';
                         } else {
@@ -1895,12 +2113,12 @@
                             const date = notification.createdAt?.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) || '';
                             const item = document.createElement('div');
                             item.className = 'notification-item';
-                            const deleteIconHTML = (currentUserRole === 'developer' && userId) ? `<i class="bi bi-trash delete-notification-btn" data-id="${docSnapshot.id}" style="display: inline-block;"></i>` : '';
+                            const deleteIconHTML = (currentUserRole === 'developer' && isUserRegistered) ? `<i class="bi bi-trash delete-notification-btn" data-id="${docSnapshot.id}" style="display: inline-block;"></i>` : '';
                             item.innerHTML = `${deleteIconHTML}<div class="d-flex justify-content-between align-items-center"><h6 class="notification-title mb-1">${notification.title}</h6><span class="notification-date">${date}</span></div><p class="notification-body mb-0">${notification.message}</p>`;
                             notificationsList.appendChild(item);
                         });
 
-                        if (currentUserRole === 'developer' && userId) {
+                        if (currentUserRole === 'developer' && isUserRegistered) {
                             document.querySelectorAll('.delete-notification-btn').forEach(button => {
                                 button.addEventListener('click', async (e) => {
                                     e.stopPropagation();
@@ -2167,19 +2385,15 @@
             const commitmentPages = { formPage, documentPage, editPage };
             const userSignatureEl = document.getElementById('user-signature');
 
-            // MODIFIED: This function now handles fade transitions
             const showCommitmentPage = (pageId) => {
                 Object.values(commitmentPages).forEach(page => {
-                    // We no longer use Tailwind's 'hidden' class, we use our own '.visible' class
                     page.classList.remove('hidden'); 
-                    
                     if (page.id === pageId) {
                         page.classList.add('visible');
                     } else {
                         page.classList.remove('visible');
                     }
                 });
-                // Find the currently visible page to scroll it to the top
                 const visiblePage = document.querySelector('#commitment-document-page .visible');
                 if (visiblePage) {
                     visiblePage.scrollTo(0, 0);
@@ -2205,30 +2419,22 @@
                 document.getElementById('edit-message').value = data.message || '';
             };
 
-            // Function to load data based on user auth state
             const loadCommitmentData = async () => {
                 const user = auth.currentUser;
                 showSpinner();
                 try {
                     if (user && !user.isAnonymous) {
-                        // Registered user: use Firestore
                         const docRef = doc(db, "users", user.uid, "commitment", "document");
-                        try {
-                            const docSnap = await getDoc(docRef);
-                            if (docSnap.exists()) {
-                                const data = docSnap.data();
-                                populateDocument(data);
-                                if(userSignatureEl) userSignatureEl.textContent = user.displayName || 'مستخدم';
-                                showCommitmentPage('document-page');
-                            } else {
-                                showCommitmentPage('form-page');
-                            }
-                        } catch (error) {
-                            console.error("Error getting commitment document from Firestore:", error);
-                            showCommitmentPage('form-page'); // Fallback to form on error
+                        const docSnap = await getDoc(docRef);
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            populateDocument(data);
+                            if(userSignatureEl) userSignatureEl.textContent = user.displayName || 'مستخدم';
+                            showCommitmentPage('document-page');
+                        } else {
+                            showCommitmentPage('form-page');
                         }
                     } else {
-                        // Anonymous user: use localStorage
                         const savedData = localStorage.getItem('commitmentDocument');
                         if (savedData) {
                             const data = JSON.parse(savedData);
@@ -2244,17 +2450,14 @@
                 }
             };
 
-            // Function to save data based on user auth state
             const saveCommitmentData = async (data) => {
                 const user = auth.currentUser;
                 showSpinner();
                 try {
                     if (user && !user.isAnonymous) {
-                        // Registered user: save to Firestore
                         const docRef = doc(db, "users", user.uid, "commitment", "document");
                         await setDoc(docRef, data);
                     } else {
-                        // Anonymous user: save to localStorage
                         localStorage.setItem('commitmentDocument', JSON.stringify(data));
                     }
                 } finally {
@@ -2262,17 +2465,14 @@
                 }
             };
 
-            // Function to delete data based on user auth state
             const deleteCommitmentData = async () => {
                 const user = auth.currentUser;
                 showSpinner();
                 try {
                     if (user && !user.isAnonymous) {
-                        // Registered user: delete from Firestore
                         const docRef = doc(db, "users", user.uid, "commitment", "document");
                         await deleteDoc(docRef);
                     } else {
-                        // Anonymous user: delete from localStorage
                         localStorage.removeItem('commitmentDocument');
                     }
                 } finally {
@@ -2281,7 +2481,6 @@
             };
 
 
-            // Event listener for the create form
             createForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const user = auth.currentUser;
@@ -2299,7 +2498,6 @@
                 showCommitmentPage('document-page');
             });
 
-            // Event listener for the edit button
             editBtn.addEventListener('click', async () => {
                 const user = auth.currentUser;
                 let data;
@@ -2326,7 +2524,6 @@
             });
 
 
-            // Event listener for the edit form
             editForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const user = auth.currentUser;
@@ -2344,7 +2541,6 @@
                 showCommitmentPage('document-page');
             });
 
-            // Event listener for the delete button
             deleteBtn.addEventListener('click', () => {
                 const modal = document.createElement('div');
                 modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
@@ -2393,6 +2589,432 @@
                 });
             }
             // --- END: New Navigation Logic ---
+
+            // --- START: Sleep AI Logic ---
+            const sleepPage = document.getElementById('sleep-improvement-page');
+            const sleepAiBtn = document.getElementById('sleep-ai-btn');
+            const backFromSleepBtn = document.getElementById('back-to-home-from-sleep-btn');
+            
+            const logSection = document.getElementById('sleep-log-section');
+            const questionSection = document.getElementById('daily-question-section');
+            const analysisSection = document.getElementById('sleep-analysis-section');
+
+            const sleepTimeInput = document.getElementById('sleep-time-input');
+            const wakeTimeInput = document.getElementById('wake-time-input');
+            const durationDisplay = document.getElementById('sleep-duration-display');
+            const submitSleepTimeBtn = document.getElementById('submit-sleep-time-btn');
+            const cancelSleepTimeBtn = document.getElementById('cancel-sleep-time-btn');
+
+            
+            const questionTextEl = document.getElementById('daily-question-text');
+            const questionOptionsContainer = document.getElementById('daily-question-options-container');
+
+            const weeklyAnalysisContainer = document.getElementById('weekly-analysis-container');
+            const analysisLastUpdatedEl = document.getElementById('analysis-last-updated');
+            let sleepChartInstance = null;
+            let tempTimeData = {};
+
+            const dailyQuestions = [
+                { key: 'mood', text: 'كيف كان مودك امس بشكل عام', options: ['رايق وممتاز', 'عادي', 'متضايق شوي', 'مره معصب'] },
+                { key: 'energy', text: 'وكيف كانت طاقتك ونشاطك امس', options: ['طاقة عالية', 'نشيط نوعا ما', 'خامل وكسلان', 'مره تعبان'] },
+                { key: 'food', text: 'اكلت اكل دسم او ثقيل قبل النوم امس', options: ['ايه اكلت وجبة دسمة', 'اكلت شي خفيف', 'لا ما اكلت شي', 'ما اذكر والله'] },
+                { key: 'screen_time', text: 'كم ساعة تقريبا استخدمت جوالك امس قبل تنام', options: ['اقل من ساعة', 'ساعة الى ساعتين', 'اكثر من ساعتين', 'ما استخدمته'] },
+                { key: 'exercise', text: 'سويت اي رياضة او مجهود بدني امس', options: ['ايه تمرنت', 'مشيت شوي', 'لا ما تحركت', 'شغل البيت بس'] },
+                { key: 'caffeine', text: 'شربت قهوة او شاهي بعد المغرب امس', options: ['ايه شربت كثير', 'كوب واحد بس', 'لا ما شربت', 'ما اذكر'] },
+                { key: 'stress', text: 'هل حسيت بضغط او توتر كبير امس', options: ['ايه مره كنت مضغوط', 'شوي بس', 'لا يومي كان هادي', 'عادي يعني'] },
+            ];
+
+            // --- START: Firestore Sleep Data Functions for REGISTERED users ---
+            async function getSleepDataFromFirestore() {
+                const user = auth.currentUser;
+                if (!user || user.isAnonymous) return { log: [], analysis: null, askedQuestions: [] };
+                const sleepDataRef = doc(db, "users", user.uid, "sleepData", "main");
+                try {
+                    const docSnap = await getDoc(sleepDataRef);
+                    const defaultData = { log: [], analysis: null, askedQuestions: [] };
+                    if (docSnap.exists()) {
+                        return { ...defaultData, ...docSnap.data() };
+                    }
+                    return defaultData;
+                } catch (error) {
+                    console.error("Error getting sleep data from Firestore:", error);
+                    return { log: [], analysis: null, askedQuestions: [] };
+                }
+            }
+
+            async function saveSleepDataToFirestore(data) {
+                const user = auth.currentUser;
+                if (!user || user.isAnonymous) return;
+                const sleepDataRef = doc(db, "users", user.uid, "sleepData", "main");
+                try {
+                    await setDoc(sleepDataRef, data);
+                } catch (error) {
+                    console.error("Error saving sleep data to Firestore:", error);
+                }
+            }
+            // --- END: Firestore Sleep Data Functions ---
+
+            // --- START: LocalStorage Sleep Data Functions for VISITORS ---
+            function getSleepDataFromLocalStorage() {
+                try {
+                    const log = JSON.parse(localStorage.getItem('sleepLogData_v2')) || [];
+                    const analysis = JSON.parse(localStorage.getItem('weeklySleepAnalysis_v2')) || null;
+                    const askedQuestions = JSON.parse(localStorage.getItem('askedSleepQuestions_v2')) || [];
+                    return { log, analysis, askedQuestions };
+                } catch {
+                    return { log: [], analysis: null, askedQuestions: [] };
+                }
+            }
+
+            function saveSleepLogToLocalStorage(data) {
+                localStorage.setItem('sleepLogData_v2', JSON.stringify(data));
+            }
+
+            function saveWeeklyAnalysisToLocalStorage(analysis) {
+                 localStorage.setItem('weeklySleepAnalysis_v2', JSON.stringify(analysis));
+            }
+
+            function saveAskedQuestionsToLocalStorage(indices) {
+                localStorage.setItem('askedSleepQuestions_v2', JSON.stringify(indices));
+            }
+            // --- END: LocalStorage Sleep Data Functions ---
+
+            // --- START: Wrapper Functions ---
+            async function getSleepLog() {
+                const user = auth.currentUser;
+                if (user && !user.isAnonymous) {
+                    const data = await getSleepDataFromFirestore();
+                    return data.log;
+                } else {
+                    return getSleepDataFromLocalStorage().log;
+                }
+            }
+
+            async function saveSleepLog(newLog) {
+                const user = auth.currentUser;
+                if (user && !user.isAnonymous) {
+                    const data = await getSleepDataFromFirestore();
+                    data.log = newLog;
+                    await saveSleepDataToFirestore(data);
+                } else {
+                    saveSleepLogToLocalStorage(newLog);
+                }
+            }
+            
+            async function getWeeklyAnalysis() {
+                 const user = auth.currentUser;
+                if (user && !user.isAnonymous) {
+                    const data = await getSleepDataFromFirestore();
+                    return data.analysis;
+                } else {
+                    return getSleepDataFromLocalStorage().analysis;
+                }
+            }
+
+            async function saveWeeklyAnalysis(analysis) {
+                 const user = auth.currentUser;
+                if (user && !user.isAnonymous) {
+                    const data = await getSleepDataFromFirestore();
+                    data.analysis = analysis;
+                    await saveSleepDataToFirestore(data);
+                } else {
+                    saveWeeklyAnalysisToLocalStorage(analysis);
+                }
+            }
+
+            async function getAskedQuestions() {
+                const user = auth.currentUser;
+                if (user && !user.isAnonymous) {
+                    const data = await getSleepDataFromFirestore();
+                    return data.askedQuestions;
+                } else {
+                    return getSleepDataFromLocalStorage().askedQuestions;
+                }
+            }
+
+            async function saveAskedQuestions(indices) {
+                const user = auth.currentUser;
+                if (user && !user.isAnonymous) {
+                    const data = await getSleepDataFromFirestore();
+                    data.askedQuestions = indices;
+                    await saveSleepDataToFirestore(data);
+                } else {
+                   saveAskedQuestionsToLocalStorage(indices);
+                }
+            }
+            // --- END: Wrapper Functions ---
+            
+            async function getSleepAIResponse(prompt) {
+                 const fullPrompt = `انت مساعد متخصص في تحسين النوم باللهجة السعودية العامية ومهمتك تعطي نصايح وتحليلات بناء على معلومات المستخدم
+
+                شروطك:
+                1 تكلم باللهجة السعودية العامية فقط
+                2 لا تستخدم ابدا اي علامات ترقيم مثل الفاصلة او النقطة
+                3 لا تستخدم ابدا اي حركات تشكيل مثل الفتحة او الضمة
+
+                هذا هو الطلب:
+                ${prompt}`;
+                return await callGeminiAPI(fullPrompt);
+            }
+
+            function showSection(section) {
+                logSection.classList.add('hidden-section');
+                questionSection.classList.add('hidden-section');
+                analysisSection.classList.add('hidden-section');
+                section.classList.remove('hidden-section');
+            }
+            
+            function formatTime12Hour(time24) {
+                if (!time24) return '';
+                let [hours, minutes] = time24.split(':');
+                hours = parseInt(hours, 10);
+                const period = hours >= 12 ? 'مساء' : 'صباحا';
+                hours = hours % 12 || 12; 
+                return `${hours}:${minutes} ${period}`;
+            }
+
+            function calculateSleepDuration(sleepTime, wakeTime) {
+                const sleep = new Date(`1970-01-01T${sleepTime}:00`);
+                const wake = new Date(`1970-01-01T${wakeTime}:00`);
+
+                if (wake <= sleep) {
+                    wake.setDate(wake.getDate() + 1);
+                }
+
+                const diff = wake.getTime() - sleep.getTime();
+                const totalHours = diff / (1000 * 60 * 60);
+                const hours = Math.floor(totalHours);
+                const minutes = Math.round((totalHours - hours) * 60);
+
+                return {
+                    decimal: parseFloat(totalHours.toFixed(1)),
+                    formatted: `نمت لمدة ${hours} ساعات و ${minutes} دقايق`
+                };
+            }
+            
+            async function initSleepFeature() {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const sleepLog = await getSleepLog();
+                const todayEntry = sleepLog.find(entry => entry.date === todayStr);
+
+                if (todayEntry) {
+                    showSleepAnalysis();
+                } else {
+                    durationDisplay.classList.add('hidden-section');
+                    showSection(logSection);
+                }
+            }
+            
+            cancelSleepTimeBtn.addEventListener('click', () => {
+                sleepTimeInput.value = '';
+                wakeTimeInput.value = '';
+                durationDisplay.classList.add('hidden-section');
+                showSection(logSection);
+                 if(sleepPage) sleepPage.classList.remove('active');
+                 if(homePage) homePage.classList.add('active');
+            });
+
+
+            submitSleepTimeBtn.addEventListener('click', () => {
+                const sleepTime = sleepTimeInput.value;
+                const wakeTime = wakeTimeInput.value;
+                if (!sleepTime || !wakeTime) {
+                    durationDisplay.textContent = 'الرجاء ادخال وقت النوم والصحيان';
+                    durationDisplay.classList.remove('hidden-section');
+                    return;
+                }
+                const duration = calculateSleepDuration(sleepTime, wakeTime);
+                durationDisplay.textContent = duration.formatted;
+                durationDisplay.classList.remove('hidden-section');
+
+                tempTimeData = { sleepTime, wakeTime, duration: duration.decimal };
+                
+                showDailyQuestion(tempTimeData);
+            });
+            
+            async function showDailyQuestion(timeData) {
+                let askedIndices = await getAskedQuestions();
+                if (askedIndices.length >= dailyQuestions.length) {
+                    askedIndices = []; // Reset if all questions asked
+                }
+                
+                let nextQuestionIndex;
+                do {
+                    nextQuestionIndex = Math.floor(Math.random() * dailyQuestions.length);
+                } while (askedIndices.includes(nextQuestionIndex));
+                
+                const question = dailyQuestions[nextQuestionIndex];
+                questionTextEl.textContent = question.text;
+                questionOptionsContainer.innerHTML = '';
+
+                question.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.className = 'user-option-btn';
+                    button.textContent = option;
+                    button.onclick = () => {
+                        handleDailyAnswer(timeData, question.key, option, nextQuestionIndex);
+                    };
+                    questionOptionsContainer.appendChild(button);
+                });
+                
+                showSection(questionSection);
+            }
+            
+            async function handleDailyAnswer(timeData, questionKey, answer, questionIndex) {
+                let askedIndices = await getAskedQuestions();
+                askedIndices.push(questionIndex);
+                await saveAskedQuestions(askedIndices);
+                
+                const todayStr = new Date().toISOString().split('T')[0];
+                const sleepLog = await getSleepLog();
+
+                const newEntry = {
+                    date: todayStr,
+                    sleepTime: timeData.sleepTime,
+                    wakeTime: timeData.wakeTime,
+                    duration: timeData.duration,
+                    dailyQuestion: {
+                        key: questionKey,
+                        answer: answer
+                    }
+                };
+
+                const filteredLog = sleepLog.filter(entry => entry.date !== todayStr);
+                const updatedLog = [...filteredLog, newEntry];
+                await saveSleepLog(updatedLog);
+
+                showSleepAnalysis(true); 
+            }
+
+            function showSleepAnalysis(forceRegenerate = false) {
+                showSection(analysisSection);
+                renderSleepChart();
+                generateWeeklyAnalysis(forceRegenerate);
+            }
+
+            async function renderSleepChart() {
+                const canvas = document.getElementById('sleepChart');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const sleepLog = (await getSleepLog()).slice(-7); 
+
+                const labels = sleepLog.map(d => new Date(d.date).toLocaleDateString('ar-EG', { weekday: 'short' }));
+                const durations = sleepLog.map(d => d.duration);
+
+                if (sleepChartInstance) {
+                    sleepChartInstance.destroy();
+                }
+
+                Chart.defaults.color = 'rgba(250, 250, 250, 0.7)';
+                Chart.defaults.borderColor = 'rgba(250, 250, 250, 0.2)';
+                
+                sleepChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'ساعات النوم',
+                            data: durations,
+                            backgroundColor: 'rgba(0, 168, 132, 0.6)',
+                            borderColor: 'rgba(0, 168, 132, 1)',
+                            borderWidth: 1,
+                            borderRadius: 5,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                             tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        const index = context[0].dataIndex;
+                                        return sleepLog[index] ? new Date(sleepLog[index].date).toLocaleDateString('ar-EG', { weekday: 'long' }) : '';
+                                    },
+                                    label: function(context) {
+                                        const index = context.dataIndex;
+                                        const entry = sleepLog[index];
+                                        if (!entry) return '';
+                                        const sleep = formatTime12Hour(entry.sleepTime);
+                                        const wake = formatTime12Hour(entry.wakeTime);
+                                        return `نمت: ${sleep} - صحيت: ${wake}`;
+                                    },
+                                     afterLabel: function(context) {
+                                        return `المدة: ${context.raw} ساعة`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'عدد الساعات'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            async function generateWeeklyAnalysis(forceRegenerate) {
+                const sleepLog = (await getSleepLog()).slice(-7);
+                
+                if (sleepLog.length < 1) {
+                    weeklyAnalysisContainer.textContent = 'ما فيه بيانات كافية عشان اعطيك تحليل ابدأ سجل نومك اليوم';
+                    return;
+                }
+
+                const lastEntryDate = sleepLog[sleepLog.length - 1].date;
+                const cachedAnalysis = await getWeeklyAnalysis();
+
+                if (!forceRegenerate && cachedAnalysis && cachedAnalysis.date === lastEntryDate) {
+                    weeklyAnalysisContainer.textContent = cachedAnalysis.text;
+                    analysisLastUpdatedEl.textContent = `آخر تحديث للتحليل: ${new Date(cachedAnalysis.timestamp).toLocaleString('ar-EG')}`;
+                    return;
+                }
+
+                weeklyAnalysisContainer.innerHTML = `<div class="d-flex justify-content-center align-items-center p-4"><div class="spinner-border" role="status"></div></div>`;
+                analysisLastUpdatedEl.textContent = '';
+                
+                const summary = sleepLog.map(d => `في يوم ${new Date(d.date).toLocaleDateString('ar-EG', { weekday: 'long' })} نمت الساعة ${d.sleepTime} وصحيت الساعة ${d.wakeTime} يعني نمت تقريبا ${d.duration} ساعات وجاوبت على سؤال اليوم بـ ${d.dailyQuestion.answer}`).join(' و ');
+                const prompt = `هذا سجل نوم واحد لمدة اسبوع ${summary} بناء على هذي البيانات عطني تحليل مفصل باللهجة السعودية العامية وبدون اي علامات ترقيم او تشكيل ووضح له نمط نومه والاشياء الايجابية والسلبية وعطه نصايح عملية عشان يحسن نومه اكثر`;
+                
+                const analysisText = await getSleepAIResponse(prompt);
+
+                const newAnalysis = {
+                    date: lastEntryDate,
+                    text: analysisText,
+                    timestamp: new Date().toISOString()
+                };
+                
+                await saveWeeklyAnalysis(newAnalysis);
+                
+                weeklyAnalysisContainer.textContent = analysisText;
+                analysisLastUpdatedEl.textContent = `آخر تحديث للتحليل: الآن`;
+            }
+
+            sleepAiBtn.addEventListener('click', () => {
+                initSleepFeature();
+                sleepPage.classList.add('active');
+            });
+
+            backFromSleepBtn.addEventListener('click', () => {
+                sleepPage.classList.remove('active');
+            });
+            // --- END: Sleep AI Logic ---
         });
 
         if ('serviceWorker' in navigator) {
@@ -2410,3 +3032,4 @@
     
 </body>
 </html>
+
