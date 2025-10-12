@@ -264,14 +264,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- START: التعديل المطلوب ---
-        // تعريف إعدادات رابط التحقق
-        const actionCodeSettings = {
-            url: window.location.origin + '/index.html', // الرابط الذي سيعود إليه المستخدم بعد التحقق
-            handleCodeInApp: true
-        };
-        // --- END: التعديل المطلوب ---
-
         const authMessage = document.getElementById("auth-message");
         const signupButton = document.getElementById("signup-button");
 
@@ -329,10 +321,7 @@
                 const user = userCredential.user;
 
                 if (user && !user.emailVerified) {
-                    // --- START: التعديل المطلوب ---
-                    // إرسال بريد التحقق مع الإعدادات المخصصة
-                    await sendEmailVerification(user, actionCodeSettings);
-                    // --- END: التعديل المطلوب ---
+                    await sendEmailVerification(user);
                     showAuthMessage("تم إرسال بريد تحقق جديد إليك. يرجى التحقق من بريدك الإلكتروني، بما في ذلك مجلد الرسائل غير المرغوب فيها (Spam).", false);
                 } else if (user && user.emailVerified) {
                     showAuthMessage("حسابك مؤكد بالفعل. يمكنك <a href='index.html'>تسجيل الدخول</a>.", false);
@@ -378,10 +367,7 @@
                             role: "user",
                             createdAt: new Date()
                         }),
-                        // --- START: التعديل المطلوب ---
-                        // إرسال بريد التحقق مع الإعدادات المخصصة
-                        sendEmailVerification(user, actionCodeSettings)
-                        // --- END: التعديل المطلوب ---
+                        sendEmailVerification(user)
                     ]);
                 })
                 .then(() => {
@@ -415,3 +401,4 @@
 
 </body>
 </html>
+
