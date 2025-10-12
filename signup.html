@@ -264,6 +264,16 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // --- START: التعديل المطلوب ---
+        // تعريف إعدادات رابط التحقق الثابت
+        const actionCodeSettings = {
+            // هذا هو النطاق الافتراضي المعتمد لمشروع Firebase الخاص بك
+            url: 'https://my-chat-app-daaf8.firebaseapp.com/__/auth/callback',
+            // هذا الخيار ضروري ليعمل الرابط بشكل صحيح داخل WebView
+            handleCodeInApp: true
+        };
+        // --- END: التعديل المطلوب ---
+
         const authMessage = document.getElementById("auth-message");
         const signupButton = document.getElementById("signup-button");
 
@@ -321,7 +331,8 @@
                 const user = userCredential.user;
 
                 if (user && !user.emailVerified) {
-                    await sendEmailVerification(user);
+                    // إرسال بريد التحقق مع الإعدادات المخصصة
+                    await sendEmailVerification(user, actionCodeSettings);
                     showAuthMessage("تم إرسال بريد تحقق جديد إليك. يرجى التحقق من بريدك الإلكتروني، بما في ذلك مجلد الرسائل غير المرغوب فيها (Spam).", false);
                 } else if (user && user.emailVerified) {
                     showAuthMessage("حسابك مؤكد بالفعل. يمكنك <a href='index.html'>تسجيل الدخول</a>.", false);
@@ -367,7 +378,8 @@
                             role: "user",
                             createdAt: new Date()
                         }),
-                        sendEmailVerification(user)
+                        // إرسال بريد التحقق مع الإعدادات المخصصة
+                        sendEmailVerification(user, actionCodeSettings)
                     ]);
                 })
                 .then(() => {
@@ -401,4 +413,3 @@
 
 </body>
 </html>
-
