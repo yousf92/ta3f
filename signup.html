@@ -247,9 +247,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, updateProfile, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, updateProfile, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAGgZmhJ_mMezlf7xElisvzJ8l9D758d4g",
@@ -263,6 +263,14 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // --- START: التعديل المطلوب ---
+        // تعريف إعدادات رابط التحقق
+        const actionCodeSettings = {
+            url: window.location.origin + '/index.html', // الرابط الذي سيعود إليه المستخدم بعد التحقق
+            handleCodeInApp: true
+        };
+        // --- END: التعديل المطلوب ---
 
         const authMessage = document.getElementById("auth-message");
         const signupButton = document.getElementById("signup-button");
@@ -321,7 +329,10 @@
                 const user = userCredential.user;
 
                 if (user && !user.emailVerified) {
-                    await sendEmailVerification(user);
+                    // --- START: التعديل المطلوب ---
+                    // إرسال بريد التحقق مع الإعدادات المخصصة
+                    await sendEmailVerification(user, actionCodeSettings);
+                    // --- END: التعديل المطلوب ---
                     showAuthMessage("تم إرسال بريد تحقق جديد إليك. يرجى التحقق من بريدك الإلكتروني، بما في ذلك مجلد الرسائل غير المرغوب فيها (Spam).", false);
                 } else if (user && user.emailVerified) {
                     showAuthMessage("حسابك مؤكد بالفعل. يمكنك <a href='index.html'>تسجيل الدخول</a>.", false);
@@ -367,7 +378,10 @@
                             role: "user",
                             createdAt: new Date()
                         }),
-                        sendEmailVerification(user)
+                        // --- START: التعديل المطلوب ---
+                        // إرسال بريد التحقق مع الإعدادات المخصصة
+                        sendEmailVerification(user, actionCodeSettings)
+                        // --- END: التعديل المطلوب ---
                     ]);
                 })
                 .then(() => {
@@ -401,4 +415,3 @@
 
 </body>
 </html>
-
