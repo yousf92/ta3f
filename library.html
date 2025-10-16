@@ -867,12 +867,15 @@
             appToastInstance.show();
         }
 
+        // --- MODIFICATION START ---
+        // Updated to use the new dynamic cache name from sw.js
         async function checkIfBookIsCached(url) {
             if (!('caches' in window)) return false;
-            const cache = await caches.open('unified-assets-cache-v1');
+            const cache = await caches.open('dynamic-assets-cache-v1'); 
             const response = await cache.match(url);
             return !!response;
         }
+        // --- MODIFICATION END ---
 
         async function updateOfflineButtonState(pdfUrl) {
             const isCached = await checkIfBookIsCached(pdfUrl);
@@ -888,23 +891,41 @@
             }
         }
 
+        // --- MODIFICATION START ---
+        // Updated with more explicit logic as requested
         saveOfflineBtn.addEventListener('click', async () => {
             if (currentPdfUrl) {
+                // 1. Explicitly check if the book is already in the cache.
+                const isCached = await checkIfBookIsCached(currentPdfUrl);
+                if (isCached) {
+                    showToast('معلومات', 'الكتاب محفوظ بالفعل في جهازك.');
+                    return; // Exit if already cached
+                }
+
+                // 2. If not cached, disable the button and show a spinner.
                 saveOfflineBtn.disabled = true;
                 const icon = saveOfflineBtn.querySelector('i');
                 icon.className = 'spinner-border spinner-border-sm';
 
                 try {
-                    await fetch(currentPdfUrl); 
-                    showToast('نجاح', 'تم حفظ الكتاب بنجاح!');
-                    updateOfflineButtonState(currentPdfUrl);
+                    // 3. Fetch the resource. The service worker will intercept this request and cache it.
+                    const response = await fetch(currentPdfUrl);
+                    if (!response.ok) {
+                        // If the network request fails, throw an error to be caught below.
+                        throw new Error(`فشل تحميل الملف: ${response.statusText}`);
+                    }
+                    showToast('نجاح', 'تم حفظ الكتاب بنجاح للقراءة بدون انترنت!');
+                    // 4. Update the button state to reflect that it's now cached.
+                    await updateOfflineButtonState(currentPdfUrl);
                 } catch (error) {
                     console.error('Caching failed:', error);
-                    showToast('فشل', 'لم يتمكن من حفظ الكتاب.');
-                    updateOfflineButtonState(currentPdfUrl);
+                    showToast('فشل', 'لم يتمكن من حفظ الكتاب. الرجاء التحقق من اتصالك بالانترنت.');
+                    // 5. On failure, revert the button to its original, downloadable state.
+                    await updateOfflineButtonState(currentPdfUrl);
                 }
             }
         });
+        // --- MODIFICATION END ---
         
         sectionsContainer.addEventListener('click', (e) => {
             const favoriteBtn = e.target.closest('.favorite-btn');
