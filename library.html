@@ -3,12 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>تحت الصيانة</title>
+    <title>المكتبة | لا أبرح حتى أبلغ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <!-- Uploadcare Scripts -->
+    <script>
+        UPLOADCARE_PUBLIC_KEY = '0b3ac2b57a7d8f508f95';
+    </script>
+    <script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js" charset="utf-8"></script>
+    <!-- End Uploadcare Scripts -->
+
     <style>
-        /* تم استخدام نفس أنماط ملفك الأصلي للحفاظ على التصميم */
         :root {
             --primary-color: #00a884;
             --danger-color: #ff5c5c;
@@ -25,58 +33,1699 @@
             background-position: center;
             background-attachment: fixed;
             color: var(--text-color);
-            height: 100%;
+            position: fixed; width: 100%; height: 100%; overflow: hidden;
         }
-        .page {
-            display: flex;
+        .page { display: flex; flex-direction: column; height: 100%; width: 100%; }
+        .content-area { flex-grow: 1; overflow-y: auto; padding: 1rem; padding-bottom: 80px; }
+        .top-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 1rem; 
+            background-color: rgba(18, 18, 18, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color); 
+            z-index: 102; 
+        }
+        .top-header h5 { margin: 0; font-weight: 700; }
+        .bottom-nav { 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 0.5rem 0; 
+            background-color: rgba(30, 30, 30, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.2); 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            z-index: 100; 
+            border-top: 1px solid rgba(56, 56, 56, 0.5);
+        }
+        
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--secondary-text-color); text-decoration: none; font-size: 0.75rem; cursor: pointer; width: 14%; height: 50px; justify-content: center; }
+        .nav-item i { font-size: 1.5rem; margin-bottom: 4px; }
+        .nav-item.active { color: var(--primary-color); }
+        
+        .nav-item.special-item { transform: translateY(-20px); position: relative; }
+        .nav-item.special-item .icon-background { width: 60px; height: 60px; background: linear-gradient(135deg, #00a884, #00c896); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0, 168, 132, 0.4); }
+        .special-item .icon-background i { color: white; font-size: 2rem; margin: 0; }
+
+        .chat-notification-badge {
+            position: absolute;
+            top: -8px; 
+            right: 25px; 
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 13px;
+            font-weight: bold;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid var(--card-background);
+            z-index: 1;
+        }
+       
+        .card, .modal-content { background-color: var(--card-background); border: 1px solid var(--border-color); color: var(--text-color); }
+        .card-title { font-weight: 700; color: #FFFFFF; font-size: 0.9rem; }
+        .text-muted { color: var(--secondary-text-color) !important; }
+        .form-control, .form-select, .form-control:focus, .form-select:focus { background-color: #333; border-color: var(--border-color); color: var(--text-color); }
+        .form-control:focus, .form-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.25rem rgba(0, 168, 132, 0.25); }
+        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); }
+        .btn-secondary { background-color: #444; border-color: #555; }
+        .modal-header, .modal-footer { border-bottom-color: var(--border-color); border-top-color: var(--border-color); }
+        
+        .fab { position: fixed; bottom: 80px; left: 20px; width: 56px; height: 56px; border-radius: 50%; background-color: var(--primary-color); color: white; display: none; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 101; }
+        
+        #pdf-reader-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--background-color); z-index: 1050; display: flex; flex-direction: column; overflow: hidden; }
+        
+        #pdf-viewer-container { 
+            flex-grow: 1; 
+            overflow: auto; 
+            display: flex; 
+            align-items: flex-start; 
+            justify-content: flex-start; 
+            padding: 1rem; 
+            cursor: grab;
+        }
+        #pdf-viewer-container:active {
+            cursor: grabbing;
+        }
+
+        #pdf-canvas { border: 1px solid var(--border-color); direction: ltr; }
+        #pdf-canvas.comfort-mode { filter: sepia(70%) contrast(95%) brightness(95%); }
+        #pdf-canvas.night-mode { filter: invert(1) hue-rotate(180deg) brightness(95%) contrast(90%); }
+        
+        #pdf-controls { 
+            display: flex; 
             flex-direction: column;
-            justify-content: center; /* توسيط عمودي */
-            align-items: center; /* توسيط أفقي */
-            height: 100%;
+            padding: 8px; 
+            background-color: var(--card-background); 
+            border-top: 1px solid var(--border-color); 
+            gap: 8px;
+            position: relative; 
+            z-index: 1052; 
+        }
+        .pdf-controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
             width: 100%;
-            text-align: center;
-            padding: 1rem;
+            gap: 10px;
         }
-        .maintenance-icon {
-            font-size: 5rem; /* تكبير الأيقونة */
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
+
+        #zoom-controls { display: flex; align-items: center; gap: 5px; }
+        #zoom-range { width: 80px; margin: 0 5px; }
+        #current-zoom-percent { min-width: 40px; text-align: center; }
+
+        .section-container { margin-bottom: 2rem; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .section-header h5 { margin: 0; font-weight: 700; }
+        .section-header .show-more-btn { color: var(--primary-color); text-decoration: none; font-size: 0.9rem; }
+        .books-row { display: flex; overflow-x: auto; gap: 1rem; padding-bottom: 1rem; scrollbar-width: none; }
+        .books-row::-webkit-scrollbar { display: none; }
+        
+        /* --- START: Professional Book Card Styles --- */
+        .book-card { 
+            flex: 0 0 140px; 
+            width: 140px; 
+            background-color: transparent; 
+            border: none; 
+            cursor: pointer; 
+            position: relative; 
+            perspective: 1000px;
+            z-index: 1; /* Set base stacking context */
         }
-        .maintenance-title {
-            font-weight: 700;
-            font-size: 1.5rem;
+        
+        /* --- START: Fix for dropdown menu visibility --- */
+        .book-card:hover {
+            z-index: 100; /* Ensure hovered card and its children are on top */
+        }
+        /* --- END: Fix for dropdown menu visibility --- */
+
+        .book-cover-container {
+            width: 100%;
+            height: 200px;
+            border-radius: 8px;
             margin-bottom: 0.5rem;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+            position: relative;
+            overflow: hidden;
         }
-        .maintenance-text {
+
+        .book-card:hover .book-cover-container {
+            transform: rotateY(5deg) scale(1.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+        }
+
+        .book-cover-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            display: block;
+        }
+        
+        /* New Realistic Placeholder */
+        .book-card-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background-color: #4a2c2a; 
+            background-image: 
+                linear-gradient(90deg, rgba(0,0,0,0.25) 0%, transparent 12px),
+                linear-gradient(315deg, rgba(255,255,255,0.07) 25%, transparent 25%),
+                linear-gradient(45deg, rgba(255,255,255,0.07) 25%, transparent 25%);
+            background-size: 100%, 6px 6px, 6px 6px;
+            background-position: 0 0, 0 0, 3px 3px;
+        }
+
+        .book-card-placeholder::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 18px;
+            right: 8px;
+            bottom: 8px;
+            border: 1px solid rgba(210, 180, 140, 0.6);
+            box-shadow: inset 0 0 0 1px rgba(210, 180, 140, 0.4);
+            border-radius: 2px;
+        }
+
+        .book-card-placeholder::after {
+            content: "\f192";
+            font-family: "bootstrap-icons";
+            font-size: 55px;
+            color: rgba(210, 180, 140, 0.7);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+            z-index: 1;
+        }
+        /* --- END: Professional Book Card Styles --- */
+
+        .book-actions { position: absolute; top: 5px; left: 5px; z-index: 15; } /* Increased z-index */
+        .dropdown-menu { min-width: auto; }
+        .view-toggle .btn { font-size: 0.8rem; padding: 0.25rem 0.5rem; }
+
+        #app-lock-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(18, 18, 18, 0.95);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        .lock-container {
+            text-align: center;
+            padding: 2rem;
+            background-color: var(--card-background);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+        .lock-container .icon {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        #passcode-input {
+            max-width: 200px;
+            margin: 1.5rem auto;
+            letter-spacing: 1.5rem;
+            font-size: 1.5rem;
+            text-align: center;
+            direction: ltr;
+        }
+        #passcode-input::placeholder {
+            letter-spacing: normal;
+        }
+        #unlock-btn {
+            width: 100%;
+            max-width: 200px;
+        }
+        #passcode-error {
+            display: none;
+            color: var(--danger-color);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .toast-container {
+            z-index: 1100;
+        }
+        .custom-toast {
+            background-color: var(--card-background);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+        .custom-toast .toast-header {
+            background-color: #2a2a2a;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .custom-toast .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        
+        body.solid-black-bg {
+            background-image: none !important;
+            background-color: #000000 !important;
+        }
+        body.gradient-blue-bg {
+            background-image: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+        }
+        /* Style for search */
+        .search-hidden {
+            display: none !important;
+        }
+        .input-group-text {
+            background-color: #333;
+            border-color: var(--border-color);
             color: var(--secondary-text-color);
-            max-width: 400px;
         }
     </style>
 </head>
 <body>
-
-    <div class="page">
-        <!-- أيقونة الصيانة -->
-        <i class="bi bi-tools maintenance-icon"></i>
-
-        <!-- العنوان الرئيسي -->
-        <h2 class="maintenance-title">هذا القسم تحت الصيانة</h2>
-
-        <!-- نص توضيحي -->
-        <p class="maintenance-text">
-            عذرا،  نعمل حاليا على تحسين هذا القسم. يرجى المحاولة مرة أخرى في وقت لاحق.
-        </p>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="app-toast" class="toast custom-toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong class="me-auto" id="toast-title">إشعار</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toast-body">
+                ...
+            </div>
+        </div>
     </div>
 
-    <!-- هذا الجزء في حال أردت إضافة زر للعودة -->
-    <!-- 
-    <nav class="bottom-nav" style="position: fixed; bottom: 0; width: 100%;">
-        <a href="main.html" class="nav-item" style="color: var(--primary-color); display: flex; flex-direction: column; align-items: center; text-decoration: none; font-size: 0.85rem;">
-            <i class="bi bi-arrow-left-circle-fill" style="font-size: 2rem;"></i>
-            <span>العودة للرئيسية</span>
+    <div id="app-lock-overlay">
+        <div class="lock-container">
+            <i class="bi bi-shield-lock-fill icon"></i>
+            <h5>التطبيق مقفل</h5>
+            <p class="text-secondary small">أدخل رمز المرور للمتابعة</p>
+            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="form-control" id="passcode-input" placeholder="----">
+            <div id="passcode-error">رمز المرور غير صحيح</div>
+            <button id="unlock-btn" class="btn btn-primary mt-2">فتح القفل</button>
+        </div>
+    </div>
+    <div class="page" id="library-view">
+        <header class="top-header">
+            <div id="developer-view-toggle" class="btn-group btn-group-sm d-none" role="group">
+                <button type="button" class="btn btn-outline-primary active" data-view="public">المكتبة العامة</button>
+                <button type="button" class="btn btn-outline-primary" data-view="private">مكتبتي الخاصة</button>
+            </div>
+            <h5 id="library-title">المكتبة</h5>
+            <button id="add-section-btn" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addSectionModal" style="display: none;">
+                <i class="bi bi-card-list"></i> إدارة الأقسام
+            </button>
+        </header>
+        <main class="content-area">
+             <!-- Search Bar Added Here -->
+            <div class="px-2 pb-2">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="search" id="book-search-input" class="form-control" placeholder="ابحث عن اسم كتاب...">
+                </div>
+            </div>
+            <!-- Message for no search results -->
+            <div class="text-center p-5" id="no-search-results" style="display: none;">
+                <i class="bi bi-emoji-frown" style="font-size: 4rem; color: var(--secondary-text-color);"></i>
+                <p class="mt-3 text-muted">لم يتم العثور على أي كتب.</p>
+            </div>
+
+            <div id="sections-container"></div>
+            <div class="text-center p-5" id="no-books-placeholder" style="display: none;">
+                <i class="bi bi-collection" style="font-size: 4rem; color: var(--secondary-text-color);"></i>
+                <p class="mt-3 text-muted">لم تتم إضافة أي أقسام أو كتب بعد.</p>
+            </div>
+        </main>
+        <div class="fab" data-bs-toggle="modal" data-bs-target="#addBookModal"><i class="bi bi-plus-lg"></i></div>
+    </div>
+    
+    <div id="pdf-reader-view" class="d-none">
+        <div id="pdf-viewer-container"><canvas id="pdf-canvas"></canvas></div>
+        
+        <div id="pdf-controls">
+            <div class="pdf-controls-row">
+                <button class="btn btn-primary btn-sm" id="prev-page"><i class="bi bi-arrow-right-short"></i> السابق</button>
+                <span id="page-num" class="fw-bold px-2"></span>
+                <button class="btn btn-primary btn-sm" id="next-page">التالي <i class="bi bi-arrow-left-short"></i></button>
+            </div>
+
+            <div class="pdf-controls-row">
+                 <button class="btn btn-secondary btn-sm" id="display-mode-btn" title="تغيير وضع العرض"><i class="bi bi-moon-fill"></i></button>
+                 <button class="btn btn-secondary btn-sm" id="save-offline-btn" title="حفظ الكتاب للقراءة بدون انترنت">
+                     <i class="bi bi-cloud-arrow-down-fill"></i>
+                 </button>
+                <div id="zoom-controls">
+                    <button class="btn btn-secondary btn-sm" id="zoom-out-btn"><i class="bi bi-dash"></i></button>
+                    <input type="range" id="zoom-range" min="0.1" max="3.0" step="0.01" value="0.8" class="form-range">
+                    <button class="btn btn-secondary btn-sm" id="zoom-in-btn"><i class="bi bi-plus"></i></button>
+                </div>
+                 <span id="current-zoom-percent" class="text-white small">80%</span>
+                <button class="btn btn-secondary btn-sm" id="goto-page-btn" title="الانتقال إلى صفحة" data-bs-toggle="modal" data-bs-target="#goToPageModal">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                </button>
+                <button class="btn btn-secondary btn-sm" id="close-reader-btn" title="الرجوع"><i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addSectionModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">إدارة الأقسام</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="add-section-form" class="mb-4">
+              <label for="section-title" class="form-label">إضافة قسم جديد</label>
+              <div class="input-group">
+                <input type="text" class="form-control" id="section-title" placeholder="عنوان القسم" required>
+                <button type="submit" class="btn btn-primary">إضافة</button>
+              </div>
+            </form>
+            <hr>
+            <h6>الأقسام الحالية</h6>
+            <ul class="list-group" id="sections-list-modal"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="addBookModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">إضافة كتاب جديد</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="add-book-form">
+              <div class="mb-3">
+                  <label for="book-section" class="form-label">القسم</label>
+                  <select class="form-select" id="book-section" required><option value="">اختر قسمًا...</option></select>
+              </div>
+              <div class="mb-3">
+                <label for="book-pdf-file" class="form-label">ملف الكتاب (PDF)</label>
+                <input 
+                    type="hidden"
+                    role="uploadcare-uploader"
+                    id="book-pdf-file" 
+                    required 
+                />
+              </div>
+              <div class="mb-3">
+                <label for="book-cover-image" class="form-label">صورة الغلاف (اختياري)</label>
+                <input 
+                    type="hidden"
+                    role="uploadcare-uploader"
+                    id="book-cover-image"
+                    data-images-only
+                />
+              </div>
+              <div class="mb-3">
+                <label for="book-title" class="form-label">عنوان الكتاب</label>
+                <input type="text" class="form-control" id="book-title" required>
+              </div>
+              <div class="mb-3">
+                <label for="book-description" class="form-label">وصف قصير</label>
+                <textarea class="form-control" id="book-description" rows="2"></textarea>
+              </div>
+              <div id="add-book-status" class="alert d-none mt-2" role="alert"></div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+            <button type="submit" form="add-book-form" class="btn btn-primary" id="save-book-btn">
+              <span class="spinner-border spinner-border-sm d-none"></span> حفظ الكتاب
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="moveBookModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">نقل كتاب</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="move-book-form">
+              <p>نقل الكتاب: <strong id="move-book-title"></strong></p>
+              <div class="mb-3">
+                  <label for="move-book-section" class="form-label">اختر القسم الجديد</label>
+                  <select class="form-select" id="move-book-section" required></select>
+              </div>
+              <input type="hidden" id="move-book-id">
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+            <button type="submit" form="move-book-form" class="btn btn-primary">حفظ التغييرات</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="editBookModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">تعديل الكتاب</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="edit-book-form">
+              <input type="hidden" id="edit-book-id">
+              <div class="mb-3">
+                <label for="edit-book-title" class="form-label">عنوان الكتاب</label>
+                <input type="text" class="form-control" id="edit-book-title" required>
+              </div>
+              <div class="mb-3">
+                <label for="edit-book-description" class="form-label">وصف قصير</label>
+                <textarea class="form-control" id="edit-book-description" rows="2"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+            <button type="submit" form="edit-book-form" class="btn btn-primary">حفظ التغييرات</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- START: New Modal for Updating PDF -->
+    <div class="modal fade" id="updatePdfModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">تغيير ملف الكتاب</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="update-pdf-form">
+              <p>الكتاب: <strong id="update-pdf-book-title"></strong></p>
+              <input type="hidden" id="update-pdf-book-id">
+              <div class="mb-3">
+                <label for="update-book-pdf-file" class="form-label">اختر ملف PDF الجديد</label>
+                <input 
+                    type="hidden"
+                    role="uploadcare-uploader"
+                    id="update-book-pdf-file" 
+                    required 
+                />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+            <button type="submit" form="update-pdf-form" class="btn btn-primary">حفظ التغييرات</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- END: New Modal for Updating PDF -->
+
+    <div class="modal fade" id="goToPageModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">الانتقال إلى صفحة</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="go-to-page-modal-form">
+              <div class="mb-3">
+                <label for="go-to-page-modal-input" class="form-label">أدخل رقم الصفحة</label>
+                <input type="number" class="form-control" id="go-to-page-modal-input" required>
+                <div class="form-text" id="page-range-info"></div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+            <button type="submit" form="go-to-page-modal-form" class="btn btn-primary">اذهب</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item"><i class="bi bi-house-door-fill"></i><span>الرئيسية</span></a>
+        <a href="diaries.html" class="nav-item"><i class="bi bi-book-fill"></i><span>اليوميات</span></a>
+        <a href="articles.html" class="nav-item"><i class="bi bi-check2-square"></i><span>العادات</span></a>
+        <a href="chat.html" class="nav-item special-item">
+            <div class="icon-background"><i class="bi bi-chat-dots-fill"></i></div>
+            <span>دردشة</span>
+            <span class="chat-notification-badge"></span>
         </a>
+        <a href="follow-up.html" class="nav-item"><i class="bi bi-signpost-split-fill"></i><span>المتابعة</span></a>
+        <a href="library.html" class="nav-item active"><i class="bi bi-collection-fill"></i><span>المكتبة</span></a>
+        <a href="settings.html" class="nav-item"><i class="bi bi-gear-fill"></i><span>الاعدادات</span></a>
     </nav>
-    -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, updateDoc, deleteDoc, getDoc, setDoc, where, orderBy, getDocs, Timestamp, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        
+        // --- START: Background Theme Logic ---
+        function applyBackgroundPreference() {
+            const savedTheme = localStorage.getItem('appBackgroundTheme') || 'default';
+            const body = document.body;
+            body.classList.remove('solid-black-bg', 'gradient-blue-bg');
+            if (savedTheme === 'solid-black') {
+                body.classList.add('solid-black-bg');
+            } else if (savedTheme === 'gradient-blue') {
+                body.classList.add('gradient-blue-bg');
+            }
+        }
+        applyBackgroundPreference();
+        // --- END: Background Theme Logic ---
+
+        const DEVELOPER_UID = "sytCf4Ru91ZplxTeXYfvqGhDnn12";
+        const firebaseConfig = {
+            apiKey: "AIzaSyAGgZmhJ_mMezlf7xElisvzJ8l9D758d4g",
+            authDomain: "my-chat-app-daaf8.firebaseapp.com",
+            projectId: "my-chat-app-daaf8",
+            storageBucket: "my-chat-app-daaf8.appspot.com",
+            messagingSenderId: "789086064752",
+            appId: "1:789086064752:web:d081f1b6832dabca1d64b5"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        function initializeGlobalChatNotifications(userId) {
+            const chatBadge = document.querySelector('.chat-notification-badge');
+            if (!chatBadge) return;
+
+            let publicUnreadCount = 0;
+            let privateUnreadCount = 0;
+
+            function updateBadge() {
+                const totalUnread = publicUnreadCount + privateUnreadCount;
+                if (totalUnread > 0) {
+                    chatBadge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+                    chatBadge.style.display = 'flex';
+                } else {
+                    chatBadge.style.display = 'none';
+                }
+            }
+            
+            if (window.publicListenerUnsubscribe) window.publicListenerUnsubscribe();
+            if (window.privateListenerUnsubscribe) window.privateListenerUnsubscribe();
+
+            const lastReadTimestamp = parseInt(localStorage.getItem('lastReadTimestamp') || '0');
+            const messagesRef = collection(db, "messages");
+            const publicQuery = query(messagesRef, where("createdAt", ">", Timestamp.fromMillis(lastReadTimestamp)));
+            window.publicListenerUnsubscribe = onSnapshot(publicQuery, (snapshot) => {
+                let count = 0;
+                snapshot.forEach(doc => {
+                    if (doc.data().senderId !== userId) {
+                        count++;
+                    }
+                });
+                publicUnreadCount = count;
+                updateBadge();
+            });
+
+            const userIsAnonymous = auth.currentUser ? auth.currentUser.isAnonymous : true;
+            if (!userIsAnonymous) {
+                const privateChatsQuery = query(collection(db, "private_chats"), where("participants", "array-contains", userId));
+                window.privateListenerUnsubscribe = onSnapshot(privateChatsQuery, (snapshot) => {
+                    let count = 0;
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (!data[`hidden_for_${userId}`]) {
+                            count += (data[`unread_count_${userId}`] || 0);
+                        }
+                    });
+                    privateUnreadCount = count;
+                    updateBadge();
+                });
+            } else {
+                privateUnreadCount = 0;
+                updateBadge();
+            }
+        }
+
+        const libraryView = document.getElementById('library-view');
+        const pdfReaderView = document.getElementById('pdf-reader-view');
+        const pdfCanvas = document.getElementById('pdf-canvas');
+        const pageNumSpan = document.getElementById('page-num');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const zoomOutBtn = document.getElementById('zoom-out-btn');
+        const zoomInBtn = document.getElementById('zoom-in-btn');
+        const zoomRange = document.getElementById('zoom-range');
+        const currentZoomPercent = document.getElementById('current-zoom-percent');
+        const displayModeBtn = document.getElementById('display-mode-btn'); 
+        const closeReaderBtn = document.getElementById('close-reader-btn');
+        const saveOfflineBtn = document.getElementById('save-offline-btn');
+        let pdfDoc = null, pageNum = 1, pageIsRendering = false, pageNumIsPending = null;
+        let currentBookId = null, currentPdfUrl = null, currentScale = parseFloat(zoomRange.value);
+        let currentUser = null;
+        let addBookModalInstance = null;
+        let appToastInstance = null;
+        
+        const sectionsContainer = document.getElementById('sections-container');
+        const noBooksPlaceholder = document.getElementById('no-books-placeholder');
+        const addBookModalEl = document.getElementById('addBookModal');
+        const addSectionModalEl = document.getElementById('addSectionModal');
+
+        let moveBookModalInstance = null;
+        const moveBookModalEl = document.getElementById('moveBookModal');
+        const moveBookForm = document.getElementById('move-book-form');
+        const moveBookIdInput = document.getElementById('move-book-id');
+        const moveBookTitleEl = document.getElementById('move-book-title');
+        const moveBookSectionSelect = document.getElementById('move-book-section');
+
+        let editBookModalInstance = null;
+        const editBookModalEl = document.getElementById('editBookModal');
+        const editBookForm = document.getElementById('edit-book-form');
+        let unsubscribeSections = null;
+        const bookUnsubscribers = {};
+        
+        // START: New variables for update PDF modal
+        let updatePdfModalInstance = null;
+        const updatePdfModalEl = document.getElementById('updatePdfModal');
+        // END: New variables for update PDF modal
+
+        let currentView = 'public';
+
+        let userFavorites = new Set();
+        let unsubscribeFavorites = null;
+
+        let goToPageModalInstance = null;
+        const goToPageModalEl = document.getElementById('goToPageModal');
+        const goToPageModalForm = document.getElementById('go-to-page-modal-form');
+        const goToPageModalInput = document.getElementById('go-to-page-modal-input');
+        const pageRangeInfo = document.getElementById('page-range-info');
+
+        const appLockOverlay = document.getElementById('app-lock-overlay');
+        const passcodeError = document.getElementById('passcode-error');
+        const unlockBtn = document.getElementById('unlock-btn');
+        const passcodeInput = document.getElementById('passcode-input');
+        const RELOCK_TIME = 3 * 60 * 1000;
+
+        function getLockData() {
+            try {
+                return JSON.parse(localStorage.getItem('app_lock_config')) || { enabled: false, passcode: null };
+            } catch (e) {
+                return { enabled: false, passcode: null };
+            }
+        }
+
+        function initializeAppLock() {
+            const lockData = getLockData();
+            if (!lockData.enabled) return;
+            
+            const lastUnlock = localStorage.getItem('app_last_unlock') || 0;
+            const timeSinceUnlock = Date.now() - lastUnlock;
+
+            if (timeSinceUnlock >= RELOCK_TIME) {
+                appLockOverlay.style.display = 'flex';
+            }
+        }
+
+        function handleUnlock() {
+            const enteredPasscode = passcodeInput.value;
+            const lockData = getLockData();
+            passcodeError.style.display = 'none';
+            if (enteredPasscode === lockData.passcode) {
+                localStorage.setItem('app_last_unlock', Date.now());
+                appLockOverlay.style.display = 'none';
+                passcodeInput.value = '';
+            } else {
+                passcodeError.style.display = 'block';
+                passcodeInput.classList.add('is-invalid');
+                setTimeout(() => passcodeInput.classList.remove('is-invalid'), 1000);
+            }
+        }
+
+        unlockBtn.addEventListener('click', handleUnlock);
+        passcodeInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') handleUnlock();
+        });
+
+        const getSectionsCollection = () => collection(db, currentView === 'private' ? `users/${DEVELOPER_UID}/private_sections` : 'sections');
+        const getBooksCollection = () => collection(db, currentView === 'private' ? `users/${DEVELOPER_UID}/private_books` : 'books');
+        const getFavoritesCollection = () => {
+            if (!currentUser) return null;
+            return collection(db, 'user_profiles', currentUser.uid, 'favorites');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+             addBookModalInstance = new bootstrap.Modal(addBookModalEl);
+             new bootstrap.Modal(addSectionModalEl);
+             moveBookModalInstance = new bootstrap.Modal(moveBookModalEl);
+             editBookModalInstance = new bootstrap.Modal(editBookModalEl);
+             goToPageModalInstance = new bootstrap.Modal(goToPageModalEl);
+             updatePdfModalInstance = new bootstrap.Modal(updatePdfModalEl); // Initialize new modal
+             appToastInstance = new bootstrap.Toast(document.getElementById('app-toast'));
+             pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+             updateZoomDisplay();
+             setupPdfPanning();
+             window.addEventListener('resize', () => {
+                if (pdfDoc && !pageIsRendering) {
+                    renderPage(pageNum);
+                }
+             });
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            initializeAppLock();
+            setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    localStorage.setItem('app_last_unlock', Date.now());
+                }
+            }, 60 * 1000);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    initializeAppLock();
+                }
+            });
+            if (!user) {
+                try {
+                    currentUser = (await signInAnonymously(auth)).user;
+                } catch (error) { console.error("Anonymous sign in failed:", error); return; }
+            } else {
+                 currentUser = user; 
+            }
+            
+            initializeGlobalChatNotifications(currentUser.uid);
+            
+            const isDeveloper = currentUser.uid === DEVELOPER_UID;
+            document.querySelector('.fab').style.display = isDeveloper ? 'flex' : 'none';
+            document.getElementById('add-section-btn').style.display = isDeveloper ? 'block' : 'none';
+            
+            const viewToggle = document.getElementById('developer-view-toggle');
+            if (isDeveloper) {
+                document.getElementById('library-title').classList.add('d-none');
+                viewToggle.classList.remove('d-none');
+                viewToggle.addEventListener('click', (e) => {
+                    if (e.target.matches('button')) {
+                        const view = e.target.dataset.view;
+                        if (view !== currentView) {
+                            switchView(view);
+                        }
+                    }
+                });
+            }
+            
+            listenToFavorites();
+            await fetchAndApplyUserPreferences();
+            fetchSectionsAndBooks(); 
+        });
+
+        function showToast(title, body) {
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-body').textContent = body;
+            appToastInstance.show();
+        }
+
+        async function checkIfBookIsCached(url) {
+            if (!('caches' in window)) return false;
+            const cache = await caches.open('unified-assets-cache-v1');
+            const response = await cache.match(url);
+            return !!response;
+        }
+
+        async function updateOfflineButtonState(pdfUrl) {
+            const isCached = await checkIfBookIsCached(pdfUrl);
+            const icon = saveOfflineBtn.querySelector('i');
+            if (isCached) {
+                saveOfflineBtn.disabled = true;
+                saveOfflineBtn.title = "الكتاب محفوظ بالفعل";
+                icon.className = 'bi bi-check-circle-fill';
+            } else {
+                saveOfflineBtn.disabled = false;
+                saveOfflineBtn.title = "حفظ الكتاب للقراءة بدون انترنت";
+                icon.className = 'bi bi-cloud-arrow-down-fill';
+            }
+        }
+
+        saveOfflineBtn.addEventListener('click', async () => {
+            if (currentPdfUrl) {
+                saveOfflineBtn.disabled = true;
+                const icon = saveOfflineBtn.querySelector('i');
+                icon.className = 'spinner-border spinner-border-sm';
+
+                try {
+                    await fetch(currentPdfUrl); 
+                    showToast('نجاح', 'تم حفظ الكتاب بنجاح!');
+                    updateOfflineButtonState(currentPdfUrl);
+                } catch (error) {
+                    console.error('Caching failed:', error);
+                    showToast('فشل', 'لم يتمكن من حفظ الكتاب.');
+                    updateOfflineButtonState(currentPdfUrl);
+                }
+            }
+        });
+        
+        sectionsContainer.addEventListener('click', (e) => {
+            const favoriteBtn = e.target.closest('.favorite-btn');
+            if (favoriteBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const bookId = favoriteBtn.dataset.bookId;
+                if (bookId) {
+                    toggleFavorite(bookId);
+                }
+            }
+        });
+
+        function switchView(view) {
+            currentView = view;
+            const toggleButtons = document.querySelectorAll('#developer-view-toggle button');
+            toggleButtons.forEach(btn => {
+                if (btn.dataset.view === view) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            fetchSectionsAndBooks();
+        }
+
+        function fetchSectionsAndBooks() {
+            if (unsubscribeSections) unsubscribeSections();
+            Object.values(bookUnsubscribers).forEach(unsub => unsub());
+
+            const sectionsQuery = query(getSectionsCollection(), orderBy("createdAt", "asc"));
+            
+            unsubscribeSections = onSnapshot(sectionsQuery, (snapshot) => {
+                const existingSectionIds = new Set();
+                snapshot.forEach(doc => existingSectionIds.add(doc.id));
+                
+                const sectionElements = sectionsContainer.querySelectorAll('.section-container:not(#favorites-section-container)');
+                sectionElements.forEach(el => {
+                    const sectionId = el.id.replace('section-', '');
+                    if (!existingSectionIds.has(sectionId)) {
+                        el.remove();
+                    }
+                });
+
+                if (snapshot.empty && userFavorites.size === 0) {
+                    noBooksPlaceholder.style.display = 'block';
+                } else {
+                     noBooksPlaceholder.style.display = 'none';
+                }
+
+                snapshot.forEach(sectionDoc => {
+                    const section = sectionDoc.data();
+                    const sectionId = sectionDoc.id;
+                    if (!document.getElementById(`section-${sectionId}`)) {
+                       renderSection(sectionId, section.title);
+                    }
+                    fetchBooksForSection(sectionId);
+                });
+
+            }, (error) => console.error("Error fetching sections:", error));
+        }
+
+        function renderSection(sectionId, title) {
+            const sectionEl = document.createElement('div');
+            sectionEl.className = 'section-container';
+            sectionEl.id = `section-${sectionId}`;
+            sectionEl.innerHTML = `
+                <div class="section-header">
+                    <h5>${title}</h5>
+                    <a href="#" class="show-more-btn" data-section-id="${sectionId}">عرض المزيد <i class="bi bi-arrow-left-short"></i></a>
+                </div>
+                <div class="books-row"></div>
+            `;
+            sectionsContainer.appendChild(sectionEl);
+
+            sectionEl.querySelector('.show-more-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                const hiddenBooks = document.querySelectorAll(`#section-${sectionId} .book-card.d-none`);
+                hiddenBooks.forEach(book => book.classList.remove('d-none'));
+                e.target.style.display = 'none';
+            });
+        }
+        
+        function createBookCardElement(bookId, book) {
+            const el = document.createElement('div');
+            el.className = 'book-card';
+            el.dataset.bookId = bookId;
+
+            const isDeveloper = currentUser && currentUser.uid === DEVELOPER_UID;
+            const isFavorite = userFavorites.has(bookId);
+
+            const coverContent = book.coverImageUrl
+                ? `<img src="${book.coverImageUrl}" alt="غلاف">`
+                : `<div class="book-card-placeholder"></div>`;
+
+            let menuItems = `<li><a class="dropdown-item favorite-btn" href="#" data-book-id="${bookId}">
+                <i class="bi ${isFavorite ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i>
+                <span style="margin-right: 8px;">${isFavorite ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}</span>
+            </a></li>`;
+
+            if (isDeveloper) {
+                if (book.coverImageUrl) {
+                    menuItems += `<li><a class="dropdown-item delete-cover-btn" href="#" data-book-id="${bookId}">حذف صورة الغلاف</a></li>`;
+                }
+                menuItems += `
+                   <li><a class="dropdown-item edit-btn" href="#" data-book-id="${bookId}">تعديل</a></li>
+                   <li><a class="dropdown-item move-btn" href="#" data-book-id="${bookId}" data-book-title="${book.title}">نقل...</a></li>
+                   <li><a class="dropdown-item update-pdf-btn" href="#" data-book-id="${bookId}" data-book-title="${book.title}">تغيير ملف PDF</a></li>
+                   <li><hr class="dropdown-divider"></li>
+                   <li><a class="dropdown-item text-danger delete-btn" href="#" data-book-id="${bookId}">حذف</a></li>
+                `;
+            } else {
+                menuItems += `<li><a class="dropdown-item download-btn" href="${book.pdfUrl}" download="${book.title}.pdf">تنزيل</a></li>`;
+            }
+
+            el.innerHTML = `
+                <div class="book-cover-container">
+                    ${coverContent}
+                </div>
+                <h6 class="card-title text-center">${book.title}</h6>
+                <div class="book-actions dropdown">
+                    <button class="btn btn-sm text-white bg-dark bg-opacity-50 rounded-circle" type="button" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></button>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        ${menuItems}
+                    </ul>
+                </div>
+            `;
+
+            el.addEventListener('click', (e) => {
+                if (!e.target.closest('.book-actions')) {
+                     openPdfReader(bookId, book.pdfUrl, book.title);
+                }
+            });
+
+            if(isDeveloper) {
+                el.querySelector('.delete-cover-btn')?.addEventListener('click', (e) => {
+                   e.preventDefault(); e.stopPropagation();
+                   deleteBookCover(e.currentTarget.dataset.bookId);
+                });
+                el.querySelector('.delete-btn')?.addEventListener('click', (e) => {
+                   e.preventDefault(); e.stopPropagation();
+                   if (confirm('هل أنت متأكد من حذف هذا الكتاب؟')) {
+                       deleteBook(e.target.dataset.bookId);
+                   }
+                });
+                el.querySelector('.move-btn')?.addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    openMoveBookModal(
+                        e.currentTarget.dataset.bookId, 
+                        e.currentTarget.dataset.bookTitle, 
+                        book.sectionId
+                    );
+                });
+                el.querySelector('.edit-btn')?.addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    openEditBookModal(e.target.dataset.bookId);
+                });
+                // START: Add event listener for new button
+                el.querySelector('.update-pdf-btn')?.addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    openUpdatePdfModal(
+                        e.currentTarget.dataset.bookId,
+                        e.currentTarget.dataset.bookTitle
+                    );
+                });
+                // END: Add event listener for new button
+            }
+            return el;
+        }
+
+        async function deleteBookCover(bookId) {
+            if (!bookId) return;
+            if (!confirm('هل أنت متأكد من حذف صورة غلاف هذا الكتاب؟')) return;
+
+            const bookRef = doc(getBooksCollection(), bookId);
+            try {
+                await updateDoc(bookRef, {
+                    coverImageUrl: deleteField()
+                });
+                showToast('نجاح', 'تم حذف صورة الغلاف بنجاح.');
+            } catch (error) {
+                console.error("Error deleting cover image:", error);
+                showToast('خطأ', 'فشل حذف صورة الغلاف.');
+            }
+        }
+
+        function fetchBooksForSection(sectionId) {
+            if (bookUnsubscribers[sectionId]) bookUnsubscribers[sectionId]();
+
+            const booksQuery = query(getBooksCollection(), where("sectionId", "==", sectionId));
+            
+            bookUnsubscribers[sectionId] = onSnapshot(booksQuery, (snapshot) => {
+                const sectionEl = document.getElementById(`section-${sectionId}`);
+                if (!sectionEl) return;
+
+                const booksRow = sectionEl.querySelector('.books-row');
+                const showMoreBtn = sectionEl.querySelector('.show-more-btn');
+                booksRow.innerHTML = '';
+
+                if (snapshot.empty) {
+                     return;
+                }
+                sectionEl.style.display = 'block';
+                
+                showMoreBtn.style.display = snapshot.size > 15 ? 'inline' : 'none';
+                
+                const sortedDocs = snapshot.docs.sort((a, b) => (a.data().createdAt?.toMillis() || 0) - (b.data().createdAt?.toMillis() || 0));
+
+                sortedDocs.forEach((doc, index) => {
+                    const book = doc.data();
+                    const bookId = doc.id;
+                    const el = createBookCardElement(bookId, book);
+                    
+                    if (index >= 15) el.classList.add('d-none');
+                    booksRow.appendChild(el);
+                });
+            }, (error) => console.error(`Error fetching books for section ${sectionId}:`, error));
+        }
+
+        function listenToFavorites() {
+            if (unsubscribeFavorites) unsubscribeFavorites();
+            const favoritesCollection = getFavoritesCollection();
+            if (!favoritesCollection) {
+                userFavorites.clear();
+                renderFavoritesSection();
+                return;
+            }
+
+            unsubscribeFavorites = onSnapshot(favoritesCollection, (snapshot) => {
+                const newFavorites = new Set();
+                snapshot.forEach(doc => newFavorites.add(doc.id));
+                userFavorites = newFavorites;
+                renderFavoritesSection();
+                updateAllFavoriteIcons();
+            });
+        }
+
+        async function renderFavoritesSection() {
+            let sectionEl = document.getElementById('favorites-section-container');
+        
+            if (userFavorites.size === 0) {
+                if (sectionEl) sectionEl.remove();
+                if (document.querySelectorAll('.section-container').length === 0) {
+                    noBooksPlaceholder.style.display = 'block';
+                }
+                return;
+            } else {
+                 noBooksPlaceholder.style.display = 'none';
+            }
+        
+            if (!sectionEl) {
+                sectionEl = document.createElement('div');
+                sectionEl.className = 'section-container';
+                sectionEl.id = 'favorites-section-container';
+                sectionEl.innerHTML = `
+                    <div class="section-header">
+                        <h5><i class="bi bi-heart-fill" style="color: var(--danger-color);"></i> المفضلة</h5>
+                    </div>
+                    <div class="books-row"></div>
+                `;
+                sectionsContainer.prepend(sectionEl);
+            }
+        
+            const booksRow = sectionEl.querySelector('.books-row');
+            
+            const bookPromises = Array.from(userFavorites).map(async (bookId) => {
+                try {
+                    let bookRef = doc(db, 'books', bookId);
+                    let bookDoc = await getDoc(bookRef);
+                    if (!bookDoc.exists() && currentUser?.uid === DEVELOPER_UID) {
+                        bookRef = doc(db, `users/${DEVELOPER_UID}/private_books`, bookId);
+                        bookDoc = await getDoc(bookRef);
+                    }
+        
+                    if (bookDoc.exists()) {
+                        return createBookCardElement(bookDoc.id, bookDoc.data());
+                    } else {
+                        await deleteDoc(doc(getFavoritesCollection(), bookId));
+                        return null;
+                    }
+                } catch (error) {
+                    console.error(`Error fetching favorite book ${bookId}:`, error);
+                    return null;
+                }
+            });
+        
+            const bookCards = (await Promise.all(bookPromises)).filter(Boolean);
+        
+            booksRow.innerHTML = '';
+            bookCards.forEach(card => booksRow.appendChild(card));
+        }
+        
+        async function toggleFavorite(bookId) {
+            if (!currentUser) return;
+            const favoritesCollection = getFavoritesCollection();
+            if (!favoritesCollection) return;
+            const bookRef = doc(favoritesCollection, bookId);
+
+            try {
+                if (userFavorites.has(bookId)) {
+                    await deleteDoc(bookRef);
+                } else {
+                    await setDoc(bookRef, { createdAt: serverTimestamp() });
+                }
+            } catch (error) {
+                console.error("Error toggling favorite:", error);
+            }
+        }
+
+        function updateAllFavoriteIcons() {
+            document.querySelectorAll('.book-card').forEach(card => {
+                const bookId = card.dataset.bookId;
+                const favoriteBtn = card.querySelector('.favorite-btn');
+                if (bookId && favoriteBtn) {
+                    const isFavorite = userFavorites.has(bookId);
+                    const icon = favoriteBtn.querySelector('i');
+                    const text = favoriteBtn.querySelector('span');
+
+                    icon.className = `bi ${isFavorite ? 'bi-heart-fill text-danger' : 'bi-heart'}`;
+                    text.textContent = isFavorite ? 'إزالة من المفضلة' : 'إضافة للمفضلة';
+                }
+            });
+        }
+        
+        async function deleteBook(bookId) {
+             if (!bookId) return;
+             try {
+                await deleteDoc(doc(getBooksCollection(), bookId));
+             } catch(error) { console.error("Error deleting book:", error); }
+        }
+        
+        async function editSection(sectionId, currentTitle) {
+            const newTitle = prompt("أدخل العنوان الجديد للقسم:", currentTitle);
+            if (newTitle && newTitle.trim() !== '' && newTitle.trim() !== currentTitle) {
+                try {
+                    await updateDoc(doc(getSectionsCollection(), sectionId), {
+                        title: newTitle.trim()
+                    });
+                } catch (error) {
+                    console.error("Error updating section title: ", error);
+                }
+            }
+        }
+
+        async function deleteSection(sectionId) {
+            if (!confirm('هل أنت متأكد من حذف هذا القسم وكل الكتب الموجودة فيه؟')) return;
+            try {
+                const booksQuery = query(getBooksCollection(), where("sectionId", "==", sectionId));
+                const booksSnapshot = await getDocs(booksQuery);
+                const deletePromises = booksSnapshot.docs.map(bookDoc => deleteDoc(bookDoc.ref));
+                await Promise.all(deletePromises);
+                await deleteDoc(doc(getSectionsCollection(), sectionId));
+            } catch (error) { console.error("Error deleting section:", error); }
+        }
+
+        addSectionModalEl.addEventListener('show.bs.modal', () => {
+            const q = query(getSectionsCollection(), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                const list = document.getElementById('sections-list-modal');
+                list.innerHTML = snapshot.empty ? '<li class="list-group-item list-group-item-dark">لا توجد أقسام.</li>' : '';
+                snapshot.forEach(doc => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item list-group-item-dark d-flex justify-content-between align-items-center';
+                    
+                    const titleSpan = document.createElement('span');
+                    titleSpan.textContent = doc.data().title;
+                    li.appendChild(titleSpan);
+
+                    const buttonsDiv = document.createElement('div');
+
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'btn btn-sm btn-outline-info me-2';
+                    editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+                    editBtn.onclick = () => editSection(doc.id, doc.data().title);
+                    buttonsDiv.appendChild(editBtn);
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'btn btn-sm btn-outline-danger';
+                    delBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                    delBtn.onclick = () => deleteSection(doc.id);
+                    buttonsDiv.appendChild(delBtn);
+                    
+                    li.appendChild(buttonsDiv);
+                    list.appendChild(li);
+                });
+            });
+        });
+        
+        document.getElementById('add-section-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titleInput = document.getElementById('section-title');
+            const title = titleInput.value.trim();
+            if (!title) return;
+            try {
+                await addDoc(getSectionsCollection(), { title, createdAt: serverTimestamp() });
+                titleInput.value = '';
+            } catch (error) { console.error("Error adding section: ", error); }
+        });
+
+        addBookModalEl.addEventListener('show.bs.modal', () => {
+            const selectEl = document.getElementById('book-section');
+            selectEl.innerHTML = '<option value="">جار التحميل...</option>';
+            const q = query(getSectionsCollection(), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                selectEl.innerHTML = '<option value="">اختر قسمًا...</option>';
+                snapshot.forEach(doc => {
+                    selectEl.innerHTML += `<option value="${doc.id}">${doc.data().title}</option>`;
+                });
+            });
+        });
+
+        document.getElementById('add-book-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const saveBtn = document.getElementById('save-book-btn');
+            const spinner = saveBtn.querySelector('.spinner-border');
+            const statusDiv = document.getElementById('add-book-status');
+
+            if (!currentUser || currentUser.uid !== DEVELOPER_UID) return;
+
+            saveBtn.disabled = true; spinner.classList.remove('d-none');
+            statusDiv.className = 'alert alert-info mt-2'; statusDiv.textContent = 'جارٍ حفظ الكتاب...';
+
+            try {
+                const sectionId = document.getElementById('book-section').value;
+                if (!sectionId) throw new Error("الرجاء اختيار قسم للكتاب.");
+
+                const title = document.getElementById('book-title').value;
+                const pdfUrl = document.getElementById('book-pdf-file').value;
+                if (!pdfUrl) throw new Error("الرجاء اختيار ملف PDF.");
+
+                let coverImageUrl = document.getElementById('book-cover-image').value || null;
+                
+                await addDoc(getBooksCollection(), {
+                    sectionId, title, coverImageUrl, pdfUrl,
+                    description: document.getElementById('book-description').value,
+                    userId: currentUser.uid, createdAt: serverTimestamp()
+                });
+                
+                statusDiv.classList.replace('alert-info', 'alert-success');
+                statusDiv.textContent = 'تمت إضافة الكتاب بنجاح!';
+
+                setTimeout(() => {
+                    if(addBookModalInstance) addBookModalInstance.hide();
+                    e.target.reset(); 
+                    // Reset Uploadcare widgets
+                    uploadcare.jQuery(e.target).find('[role=uploadcare-uploader]').each(function() {
+                        uploadcare.Widget(this).value(null);
+                    });
+                    statusDiv.classList.add('d-none');
+                }, 2000);
+
+            } catch (error) {
+                statusDiv.classList.replace('alert-info', 'alert-danger');
+                statusDiv.textContent = `حدث خطأ: ${error.message}`;
+            } finally {
+                saveBtn.disabled = false; spinner.classList.add('d-none');
+            }
+        });
+
+        async function openMoveBookModal(bookId, bookTitle, currentSectionId) {
+            moveBookIdInput.value = bookId;
+            moveBookTitleEl.textContent = bookTitle;
+            moveBookSectionSelect.innerHTML = '<option value="">جار التحميل...</option>';
+            try {
+                const sectionsSnapshot = await getDocs(query(getSectionsCollection(), orderBy("createdAt", "desc")));
+                let optionsHtml = '';
+                sectionsSnapshot.forEach(doc => {
+                    if (doc.id !== currentSectionId) {
+                        optionsHtml += `<option value="${doc.id}">${doc.data().title}</option>`;
+                    }
+                });
+                moveBookSectionSelect.innerHTML = optionsHtml || '<option value="">لا توجد أقسام أخرى</option>';
+                moveBookModalInstance.show();
+            } catch (error) { console.error("Error loading sections for move modal:", error); }
+        }
+
+        moveBookForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const bookId = moveBookIdInput.value, newSectionId = moveBookSectionSelect.value;
+            if (!bookId || !newSectionId) return;
+            try {
+                await updateDoc(doc(getBooksCollection(), bookId), { sectionId: newSectionId });
+                moveBookModalInstance.hide();
+            } catch (error) { console.error("Error moving book:", error); }
+        });
+        
+        async function openEditBookModal(bookId) {
+            try {
+                const bookRef = doc(getBooksCollection(), bookId);
+                const bookSnap = await getDoc(bookRef);
+                if (bookSnap.exists()) {
+                    const book = bookSnap.data();
+                    document.getElementById('edit-book-id').value = bookId;
+                    document.getElementById('edit-book-title').value = book.title;
+                    document.getElementById('edit-book-description').value = book.description || '';
+                    editBookModalInstance.show();
+                } else {
+                    console.error("No such book document!");
+                }
+            } catch (error) {
+                console.error("Error opening edit book modal: ", error);
+            }
+        }
+
+        editBookForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const bookId = document.getElementById('edit-book-id').value;
+            const newTitle = document.getElementById('edit-book-title').value;
+            const newDescription = document.getElementById('edit-book-description').value;
+
+            if (!bookId || !newTitle.trim()) return;
+
+            try {
+                await updateDoc(doc(getBooksCollection(), bookId), {
+                    title: newTitle.trim(),
+                    description: newDescription.trim()
+                });
+                editBookModalInstance.hide();
+            } catch (error) {
+                console.error("Error updating book: ", error);
+            }
+        });
+
+        // START: New function to open update PDF modal
+        function openUpdatePdfModal(bookId, bookTitle) {
+            document.getElementById('update-pdf-book-id').value = bookId;
+            document.getElementById('update-pdf-book-title').textContent = bookTitle;
+            
+            const widget = uploadcare.Widget('#update-book-pdf-file');
+            widget.value(null);
+
+            updatePdfModalInstance.show();
+        }
+        // END: New function to open update PDF modal
+
+        // START: New form submission handler for updating PDF
+        document.getElementById('update-pdf-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const bookId = document.getElementById('update-pdf-book-id').value;
+            const newPdfUrl = document.getElementById('update-book-pdf-file').value;
+
+            if (!bookId || !newPdfUrl) {
+                showToast('خطأ', 'الرجاء اختيار ملف PDF جديد.');
+                return;
+            }
+
+            const bookRef = doc(getBooksCollection(), bookId);
+            try {
+                await updateDoc(bookRef, {
+                    pdfUrl: newPdfUrl
+                });
+                showToast('نجاح', 'تم تحديث ملف الكتاب بنجاح.');
+                updatePdfModalInstance.hide();
+            } catch (error) {
+                console.error("Error updating PDF:", error);
+                showToast('خطأ', 'فشل تحديث ملف الكتاب.');
+            }
+        });
+        // END: New form submission handler for updating PDF
+
+        function setupPdfPanning() {
+            const viewer = document.getElementById('pdf-viewer-container');
+            let isPanning = false;
+            let startX, startY, scrollLeftStart, scrollTopStart;
+
+            const startPan = (e) => {
+                isPanning = true;
+                const pageX = e.pageX || e.touches[0].pageX;
+                const pageY = e.pageY || e.touches[0].pageY;
+                startX = pageX - viewer.offsetLeft;
+                startY = pageY - viewer.offsetTop;
+                scrollLeftStart = viewer.scrollLeft;
+                scrollTopStart = viewer.scrollTop;
+                if(e.type === 'mousedown') e.preventDefault();
+            };
+
+            const endPan = () => {
+                isPanning = false;
+            };
+
+            const doPan = (e) => {
+                if (!isPanning) return;
+                if(e.type === 'touchmove') e.preventDefault();
+                const pageX = e.pageX || e.touches[0].pageX;
+                const pageY = e.pageY || e.touches[0].pageY;
+                const x = pageX - viewer.offsetLeft;
+                const y = pageY - viewer.offsetTop;
+                const walkX = (x - startX);
+                const walkY = (y - startY);
+                viewer.scrollLeft = scrollLeftStart - walkX;
+                viewer.scrollTop = scrollTopStart - walkY;
+            };
+
+            viewer.addEventListener('mousedown', startPan);
+            viewer.addEventListener('mouseup', endPan);
+            viewer.addEventListener('mouseleave', endPan);
+            viewer.addEventListener('mousemove', doPan);
+
+            viewer.addEventListener('touchstart', startPan, { passive: true });
+            viewer.addEventListener('touchend', endPan);
+            viewer.addEventListener('touchcancel', endPan);
+            viewer.addEventListener('touchmove', doPan, { passive: false });
+        }
+
+        async function fetchAndApplyUserPreferences() {
+            if (!currentUser) return;
+            const profileRef = doc(db, 'user_profiles', currentUser.uid);
+            const profileSnap = await getDoc(profileRef);
+            pdfCanvas.classList.remove('comfort-mode', 'night-mode');
+            if (profileSnap.exists()) {
+                const prefs = profileSnap.data();
+                if (prefs.displayMode === 1) pdfCanvas.classList.add('comfort-mode');
+                else if (prefs.displayMode === 2) pdfCanvas.classList.add('night-mode');
+            }
+        }
+
+        const renderPage = num => {
+            pageIsRendering = true;
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: currentScale });
+                const canvasContext = pdfCanvas.getContext('2d');
+                const qualityFactor = 3;
+                const devicePixelRatio = (window.devicePixelRatio || 1) * qualityFactor;
+                pdfCanvas.width = Math.floor(viewport.width * devicePixelRatio);
+                pdfCanvas.height = Math.floor(viewport.height * devicePixelRatio);
+                pdfCanvas.style.width = `${Math.floor(viewport.width)}px`;
+                pdfCanvas.style.height = `${Math.floor(viewport.height)}px`;
+                canvasContext.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+                const renderContext = { canvasContext, viewport: viewport };
+                page.render(renderContext).promise.then(() => {
+                    pageIsRendering = false;
+                    if(pageNumIsPending !== null) {
+                        renderPage(pageNumIsPending);
+                        pageNumIsPending = null;
+                    }
+                });
+                pageNumSpan.textContent = `${num} / ${pdfDoc.numPages}`;
+            });
+        };
+        const queueRenderPage = num => { if(pageIsRendering) pageNumIsPending = num; else renderPage(num); }
+        const showPrevPage = () => { if(pageNum <= 1) return; pageNum--; queueRenderPage(pageNum); }
+        const showNextPage = () => { if(pageNum >= pdfDoc.numPages) return; pageNum++; queueRenderPage(pageNum); }
+        
+        async function getUserBookProgress(bookId) {
+            if (!currentUser) return {};
+            const progressRef = doc(db, 'user_profiles', currentUser.uid, 'books_progress', bookId);
+            const progressSnap = await getDoc(progressRef);
+            return progressSnap.exists() ? progressSnap.data() : {};
+        }
+
+        async function openPdfReader(bookId, pdfUrl, title) {
+            if (!pdfUrl) return;
+            currentBookId = bookId;
+            currentPdfUrl = pdfUrl; 
+            await fetchAndApplyUserPreferences();
+            libraryView.classList.add('d-none');
+            pdfReaderView.classList.remove('d-none');
+            pageNumSpan.textContent = 'يتم التحميل...';
+            updateOfflineButtonState(pdfUrl);
+            const userProgress = await getUserBookProgress(bookId);
+            try {
+                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+                pdfDoc = await loadingTask.promise;
+                pageNum = userProgress.lastReadPage || 1;
+                currentScale = userProgress.zoomLevel || 0.8; 
+                zoomRange.value = currentScale;
+                updateZoomDisplay();
+                renderPage(pageNum);
+            } catch (err) {
+                console.error('Error loading PDF:', err);
+                closePdfReader();
+            }
+        }
+        
+        async function closePdfReader() {
+            if (currentUser && currentBookId) {
+                const progressRef = doc(db, 'user_profiles', currentUser.uid, 'books_progress', currentBookId);
+                try {
+                    await setDoc(progressRef, { lastReadPage: pageNum, zoomLevel: currentScale }, { merge: true });
+                } catch (error) { console.error("Failed to save user progress:", error); }
+            }
+            pdfDoc = null; currentBookId = null; currentPdfUrl = null; pageNum = 1;
+            libraryView.classList.remove('d-none');
+            pdfReaderView.classList.add('d-none');
+        }
+        function updateZoomDisplay() { currentZoomPercent.textContent = `${Math.round(currentScale * 100)}%`; }
+        function changeZoom(amount) {
+            let newScale = currentScale + amount;
+            if (newScale < parseFloat(zoomRange.min)) newScale = parseFloat(zoomRange.min);
+            if (newScale > parseFloat(zoomRange.max)) newScale = parseFloat(zoomRange.max);
+            currentScale = parseFloat(newScale.toFixed(2));
+            zoomRange.value = currentScale;
+            updateZoomDisplay();
+            if (pdfDoc) queueRenderPage(pageNum);
+        }
+        zoomOutBtn.addEventListener('click', () => changeZoom(-0.01));
+        zoomInBtn.addEventListener('click', () => changeZoom(0.01));
+        zoomRange.addEventListener('input', (event) => {
+            currentScale = parseFloat(event.target.value);
+            updateZoomDisplay();
+            if (pdfDoc) queueRenderPage(pageNum);
+        });
+        
+        displayModeBtn.addEventListener('click', async () => {
+            if (!currentUser) return;
+            let newMode = 0;
+            if (pdfCanvas.classList.contains('comfort-mode')) {
+                pdfCanvas.classList.remove('comfort-mode');
+                pdfCanvas.classList.add('night-mode');
+                newMode = 2;
+            } else if (pdfCanvas.classList.contains('night-mode')) {
+                pdfCanvas.classList.remove('night-mode'); newMode = 0;
+            } else {
+                pdfCanvas.classList.add('comfort-mode'); newMode = 1;
+            }
+            const profileRef = doc(db, 'user_profiles', currentUser.uid);
+            try { await setDoc(profileRef, { displayMode: newMode }, { merge: true });
+            } catch (error) { console.error("Failed to save display mode preference:", error); }
+        });
+        closeReaderBtn.addEventListener('click', closePdfReader);
+        prevPageBtn.addEventListener('click', showPrevPage);
+        nextPageBtn.addEventListener('click', showNextPage);
+
+        goToPageModalEl.addEventListener('show.bs.modal', () => {
+            if (pdfDoc) {
+                pageRangeInfo.textContent = `أدخل رقمًا بين 1 و ${pdfDoc.numPages}.`;
+                goToPageModalInput.max = pdfDoc.numPages;
+                goToPageModalInput.min = 1;
+                goToPageModalInput.value = pageNum;
+            }
+        });
+
+        goToPageModalEl.addEventListener('shown.bs.modal', () => {
+            goToPageModalInput.focus();
+            goToPageModalInput.select();
+        });
+
+        goToPageModalForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const targetPage = parseInt(goToPageModalInput.value, 10);
+
+            if (isNaN(targetPage) || !pdfDoc || targetPage < 1 || targetPage > pdfDoc.numPages) {
+                return;
+            }
+            
+            if (targetPage !== pageNum) {
+                pageNum = targetPage;
+                queueRenderPage(pageNum);
+            }
+            goToPageModalInstance.hide();
+        });
+
+        // --- START: Search Functionality ---
+        const searchInput = document.getElementById('book-search-input');
+        const noSearchResultsMessage = document.getElementById('no-search-results');
+
+        function filterBooks(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            const sections = document.querySelectorAll('#sections-container .section-container');
+            let totalVisibleBooks = 0;
+
+            // When search is cleared, reset everything and exit.
+            if (term === '') {
+                document.querySelectorAll('.search-hidden').forEach(el => el.classList.remove('search-hidden'));
+                noSearchResultsMessage.style.display = 'none';
+                // Show the original placeholder if no books exist at all.
+                const hasAnyBooks = document.querySelectorAll('.book-card').length > 0;
+                noBooksPlaceholder.style.display = hasAnyBooks ? 'none' : 'block';
+                return;
+            }
+
+            // Hide the main placeholder during search
+            noBooksPlaceholder.style.display = 'none';
+
+            sections.forEach(section => {
+                const books = section.querySelectorAll('.book-card');
+                let visibleBooksInSection = 0;
+
+                books.forEach(book => {
+                    const titleElement = book.querySelector('.card-title');
+                    const title = titleElement ? titleElement.textContent.toLowerCase() : '';
+                    
+                    if (title.includes(term)) {
+                        book.classList.remove('search-hidden');
+                        visibleBooksInSection++;
+                    } else {
+                        book.classList.add('search-hidden');
+                    }
+                });
+
+                if (visibleBooksInSection > 0) {
+                    section.classList.remove('search-hidden');
+                    totalVisibleBooks += visibleBooksInSection;
+                } else {
+                    section.classList.add('search-hidden');
+                }
+            });
+
+            noSearchResultsMessage.style.display = totalVisibleBooks === 0 ? 'block' : 'none';
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            filterBooks(e.target.value);
+        });
+        // --- END: Search Functionality ---
+
+    </script>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully.');
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
 
 </body>
 </html>
