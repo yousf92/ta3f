@@ -582,6 +582,38 @@
       </div>
     </div>
 
+    <!-- START: New Modal for Adding Cover -->
+    <div class="modal fade" id="addCoverModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">إضافة صورة غلاف</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="add-cover-form">
+              <input type="hidden" id="add-cover-book-id">
+              <div class="mb-3">
+                <label for="add-new-cover-image" class="form-label">اختر صورة الغلاف الجديدة</label>
+                <input
+                    type="hidden"
+                    role="uploadcare-uploader"
+                    id="add-new-cover-image"
+                    data-images-only
+                    required
+                />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+            <button type="submit" form="add-cover-form" class="btn btn-primary">حفظ الصورة</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- END: New Modal for Adding Cover -->
+
     <div class="modal fade" id="moveBookModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -886,6 +918,76 @@
         const updatePdfModalEl = document.getElementById('updatePdfModal');
         // END: New variables for update PDF modal
 
+        let addCoverModalInstance = null;
+        const addCoverModalEl = document.getElementById('addCoverModal');
+
+        document.addEventListener('DOMContentLoaded', () => {
+             // --- START: Added Spinner Functions ---
+             function showSpinner() {
+                const spinner = document.getElementById('loading-spinner-overlay');
+                if (spinner) {
+                    spinner.classList.add('show');
+                }
+             }
+
+             function hideSpinner() {
+                const spinner = document.getElementById('loading-spinner-overlay');
+                if (spinner) {
+                    spinner.classList.remove('show');
+                }
+             }
+             // --- END: Added Spinner Functions ---
+             addBookModalInstance = new bootstrap.Modal(addBookModalEl);
+             new bootstrap.Modal(addSectionModalEl);
+             moveBookModalInstance = new bootstrap.Modal(moveBookModalEl);
+             editBookModalInstance = new bootstrap.Modal(editBookModalEl);
+             goToPageModalInstance = new bootstrap.Modal(goToPageModalEl);
+             updatePdfModalInstance = new bootstrap.Modal(updatePdfModalEl); // Initialize new modal
+             addCoverModalInstance = new bootstrap.Modal(addCoverModalEl);
+             new bootstrap.Modal(document.getElementById('mohammedAbdullahWayModal')); // Initialize the new modal
+             appToastInstance = new bootstrap.Toast(document.getElementById('app-toast'));
+             pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+             updateZoomDisplay();
+             setupPdfPanning();
+             window.addEventListener('resize', () => {
+                if (pdfDoc && !pageIsRendering) {
+                    renderPage(pageNum);
+                }
+             });
+        });
+
+        function openAddCoverModal(bookId) {
+            document.getElementById('add-cover-book-id').value = bookId;
+            const widget = uploadcare.Widget('#add-new-cover-image');
+            widget.value(null); // Reset the widget
+            addCoverModalInstance.show();
+        }
+
+        document.getElementById('add-cover-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const bookId = document.getElementById('add-cover-book-id').value;
+            const newCoverUrl = document.getElementById('add-new-cover-image').value;
+
+            if (!bookId || !newCoverUrl) {
+                showToast('خطأ', 'الرجاء اختيار صورة غلاف.');
+                return;
+            }
+            showSpinner();
+            const bookRef = doc(getBooksCollection(), bookId);
+            try {
+                await updateDoc(bookRef, {
+                    coverImageUrl: newCoverUrl
+                });
+                showToast('نجاح', 'تمت إضافة صورة الغلاف بنجاح.');
+                addCoverModalInstance.hide();
+            } catch (error) {
+                console.error("Error adding cover image:", error);
+                showToast('خطأ', 'فشل إضافة صورة الغلاف.');
+            } finally {
+                hideSpinner();
+            }
+        });
+
         let currentView = 'public';
 
         let userFavorites = new Set();
@@ -950,39 +1052,7 @@
             return collection(db, 'user_profiles', currentUser.uid, 'favorites');
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-             // --- START: Added Spinner Functions ---
-             function showSpinner() {
-                const spinner = document.getElementById('loading-spinner-overlay');
-                if (spinner) {
-                    spinner.classList.add('show');
-                }
-             }
 
-             function hideSpinner() {
-                const spinner = document.getElementById('loading-spinner-overlay');
-                if (spinner) {
-                    spinner.classList.remove('show');
-                }
-             }
-             // --- END: Added Spinner Functions ---
-             addBookModalInstance = new bootstrap.Modal(addBookModalEl);
-             new bootstrap.Modal(addSectionModalEl);
-             moveBookModalInstance = new bootstrap.Modal(moveBookModalEl);
-             editBookModalInstance = new bootstrap.Modal(editBookModalEl);
-             goToPageModalInstance = new bootstrap.Modal(goToPageModalEl);
-             updatePdfModalInstance = new bootstrap.Modal(updatePdfModalEl); // Initialize new modal
-             new bootstrap.Modal(document.getElementById('mohammedAbdullahWayModal')); // Initialize the new modal
-             appToastInstance = new bootstrap.Toast(document.getElementById('app-toast'));
-             pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
-             updateZoomDisplay();
-             setupPdfPanning();
-             window.addEventListener('resize', () => {
-                if (pdfDoc && !pageIsRendering) {
-                    renderPage(pageNum);
-                }
-             });
-        });
 
         onAuthStateChanged(auth, async (user) => {
             initializeAppLock();
@@ -1182,6 +1252,10 @@
             if (isDeveloper) {
                 if (book.coverImageUrl) {
                     menuItems += `<li><a class="dropdown-item delete-cover-btn" href="#" data-book-id="${bookId}">حذف صورة الغلاف</a></li>`;
+                } else {
+                    // START: الكود المطلوب إضافته
+                    menuItems += `<li><a class="dropdown-item add-cover-btn" href="#" data-book-id="${bookId}">إضافة صورة غلاف</a></li>`;
+                    // END: الكود المطلوب إضافته
                 }
                 menuItems += `
                    <li><a class="dropdown-item edit-btn" href="#" data-book-id="${bookId}">تعديل</a></li>
@@ -1245,6 +1319,12 @@
                     );
                 });
                 // END: Add event listener for new button
+                 // START: الكود المطلوب إضافته
+                 el.querySelector('.add-cover-btn')?.addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    openAddCoverModal(e.currentTarget.dataset.bookId);
+                 });
+                 // END: الكود المطلوب إضافته
             }
             return el;
         }
