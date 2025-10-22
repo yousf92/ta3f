@@ -101,7 +101,7 @@
                         <!-- START: Locked Recording UI -->
                         <div id="private-locked-recording-ui" class="recording-ui" style="display: none; justify-content: space-between; width: 100%;">
                             <button id="private-cancel-recording-btn" class="btn btn-lg text-danger"><i class="bi bi-trash-fill"></i></button>
-                            <div class="d-flex align-items: center gap-2">
+                            <div class="d-flex align-items-center gap-2">
                                 <span class="recording-dot"></span>
                                 <span id="private-locked-recording-timer">00:00</span>
                             </div>
@@ -116,7 +116,7 @@
                 </div>
             </div>
             <!-- END: Private Chat View -->
-            
+
             <!-- START: Group Chat View -->
             <div id="group-chat-view" class="chat-view">
                 <div id="group-chat-header">
@@ -178,16 +178,16 @@
                 </div>
             </div>
             <!-- END: Group Chat View -->
-            
+
             <!-- START: Scroll to Bottom Button -->
             <a id="scroll-to-bottom-btn" class="scroll-to-bottom-btn">
                 <i class="bi bi-chevron-down"></i>
             </a>
             <!-- END: Scroll to Bottom Button -->
-            
+
         </div>
     </div>
-    
+
     <!-- START: Create Group Modal -->
     <div class="modal fade" id="create-group-modal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -266,7 +266,7 @@
         </div>
     </div>
     <!-- END: Edit Message Modal -->
-    
+
     <!-- START: Custom Confirm Modal HTML -->
     <div class="confirm-modal-backdrop" id="custom-confirm-modal">
         <div class="confirm-modal-content">
@@ -281,15 +281,28 @@
     <!-- END: Custom Confirm Modal HTML -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <script src="chat.setup.js"></script>
     <script src="chat.script.js" type="module"></script>
-    
+
     <!-- Loading Spinner -->
     <div id="loading-spinner-overlay" class="loading-spinner-overlay">
         <div class="loading-spinner"></div>
     </div>
     <!-- End Loading Spinner -->
-
+    <script>
+        // تسجيل Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully.');
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>

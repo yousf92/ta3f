@@ -47,11 +47,11 @@
         .page.active { display: flex; }
         .home-container { display: flex; flex-direction: column; height: 100vh; }
         .content-area { flex-grow: 1; overflow-y: auto; padding: 1rem; padding-bottom: 80px; }
-        .top-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 1rem; 
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
             background-color: rgba(18, 18, 18, 0.5);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -64,14 +64,14 @@
         .welcome-message { text-align: right; }
         .welcome-message h5 { margin: 0; font-weight: 700; color: var(--text-color);}
         .welcome-message p { margin: 0; font-size: 0.9rem; color: var(--secondary-text-color); }
-        .progress-timer-card { 
-            background: linear-gradient(135deg, #054238, #008069); 
-            color: white; 
-            border-radius: 20px; 
-            padding: 1.5rem; 
-            position: relative; 
-            overflow: hidden; 
-            box-shadow: 0 10px 25px rgba(0, 128, 105, 0.3); 
+        .progress-timer-card {
+            background: linear-gradient(135deg, #054238, #008069);
+            color: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 128, 105, 0.3);
             margin-bottom: 1.5rem;
             background-size: cover;
             background-position: center;
@@ -91,30 +91,30 @@
         .action-button { background-color: var(--card-background); border-radius: 15px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: var(--text-color); box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 1rem; font-weight: 500; border: 1px solid var(--border-color); width: 100%; }
         .action-button.najda-style { background-color: rgba(255, 92, 92, 0.1); color: var(--danger-color); border: 1px solid rgba(255, 92, 92, 0.5); justify-content: center; gap: 10px; font-size: 1.2rem; font-weight: 700; }
         .action-button.najda-style i { font-size: 1.5rem; }
-        .bottom-nav { 
-            display: flex; 
-            justify-content: space-around; 
-            padding: 0.5rem 0; 
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
             background-color: rgba(30, 30, 30, 0.5);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.2); 
-            position: fixed; 
-            bottom: 0; 
-            width: 100%; 
-            z-index: 100; 
-            border-top: 1px solid rgba(56, 56, 56, 0.5); 
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 100;
+            border-top: 1px solid rgba(56, 56, 56, 0.5);
         }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--secondary-text-color); text-decoration: none; font-size: 0.75rem; cursor: pointer; width: 14%; height: 50px; justify-content: center; }
         .nav-item i { font-size: 1.5rem; margin-bottom: 4px; }
         .nav-item.active { color: var(--primary-color); }
-        .nav-item.special-item { transform: translateY(-20px); position: relative; } 
+        .nav-item.special-item { transform: translateY(-20px); position: relative; }
         .special-item .icon-background { background: linear-gradient(135deg, #00a884, #00c896); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0, 168, 132, 0.4); }
         .special-item i { color: white; font-size: 2rem; margin: 0; }
         .chat-notification-badge {
             position: absolute;
-            top: -8px; 
-            right: 25px; 
+            top: -8px;
+            right: 25px;
             background-color: var(--danger-color);
             color: white;
             border-radius: 50%;
@@ -122,7 +122,7 @@
             height: 24px;
             font-size: 13px;
             font-weight: bold;
-            display: none; 
+            display: none;
             justify-content: center;
             align-items: center;
             border: 2px solid var(--card-background);
@@ -159,12 +159,12 @@
         .notification-body { color: var(--secondary-text-color); font-size: 0.9rem; }
         .notification-date { font-size: 0.8rem; color: #aaa; }
         .delete-notification-btn { position: absolute; left: 5px; top: 50%; transform: translateY(-50%); color: var(--danger-color); cursor: pointer; font-size: 1.2rem; display: none; }
-        #quote-page { 
-            justify-content: center; 
-            align-items: center; 
-            padding: 2rem; 
-            text-align: center; 
-            color: white; 
+        #quote-page {
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+            color: white;
             background-size: cover;
             background-position: center;
             transition: background-image 1s ease-in-out;
@@ -197,7 +197,7 @@
             height: 100%;
             object-fit: cover;
             z-index: 1;
-            border-radius: 20px; 
+            border-radius: 20px;
             transition: opacity 0.5s ease-in-out;
             opacity: 0;
         }
@@ -210,10 +210,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.45); 
+            background-color: rgba(0, 0, 0, 0.45);
             z-index: 2;
-            border-radius: 20px; 
-            display: none; 
+            border-radius: 20px;
+            display: none;
             transition: opacity 0.5s ease-in-out;
         }
          .image-background-overlay.visible {
@@ -1013,7 +1013,7 @@
             </nav>
         </div>
     </div>
-    
+
     <div id="breathing-page" class="page" style="background: linear-gradient(to top, #28b485, #7ed56f); justify-content: center; align-items: center; text-align: center; color: white; padding: 1rem;">
         <i class="bi bi-x-lg" id="close-breathing-btn" style="position: absolute; top: 20px; right: 20px; font-size: 1.8rem; cursor: pointer; z-index: 10;"></i>
         <div id="breathing-circle-container"><div id="breathing-circle"></div></div>
@@ -1036,7 +1036,7 @@
         <button id="back-to-home-btn" style="position: fixed; top: 20px; left: 20px; z-index: 1000; background: rgba(0,0,0,0.2); border: none; color: #333; border-radius: 50%; width: 44px; height: 44px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer;">
             <i class="bi bi-arrow-right-circle-fill"></i>
         </button>
-        
+
         <!-- Page 1: Create Form -->
         <div id="form-page">
             <div class="min-h-screen py-8">
@@ -1045,7 +1045,7 @@
                         <h1 class="text-4xl md:text-5xl font-bold main-title mb-2">وثيقة الإلتزام</h1>
                         <p class="text-lg text-gray-600">راجع الوثيقة يومياً، ستساعدك كثيراً على تذكير وتحفيز نفسك باستمرار!</p>
                     </header>
-                    
+
                     <form id="commitment-form">
                         <div class="form-card"><label for="damages" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>ما هي أضرار الإدمان التي أصابتك؟</label><p class="text-gray-500 mb-4">اكتب أضرار حقيقية أثرت بك وجعلتك تفكر جديا بالتعافي، أضرار على صحتك الدينية والنفسية والبدنية والاجتماعية والعقلية.</p><textarea id="damages" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"></textarea></div>
                         <div class="form-card"><label for="fears" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"></path></svg>ماهي مخاوفك الشخصية من ترك هذه العادة؟</label><p class="text-gray-500 mb-4">اكتب مخاوفك التي توهمك بأنك تحتاج لتلك العادة مثل أنه لا حل إلا بالزواج أو أن تركها يسبب خلل جنسي أو أن التعافي مستحيل.</p><textarea id="fears" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"></textarea></div>
@@ -1097,7 +1097,7 @@
                         <div class="form-card"><label for="edit-benefits" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-6.75c-.621 0-1.125.504-1.125 1.125v3.375m9 0h-9"></path></svg>ماهي فوائد التعافي التي تطمح لاكتسابها؟</label><p class="text-gray-500 mb-4">اكتب فوائد حقيقية وواقعية يمكن اكتسابها تدريجيا بالتعافي.</p><textarea id="edit-benefits" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea></div>
                         <div class="form-card"><label for="edit-escape-plan" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"></path></svg>ماهي خطة هروبك عند هجوم الرغبة الملحة؟</label><p class="text-gray-500 mb-4">ضع عادات سريعة وقصيرة، مثل تجنب الهاتف، ومغادرة الغرفة، تمارين رياضية، استحمام، وغيرها من عادات تشغلك عن التفكير بالزلل.</p><textarea id="edit-escape-plan" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea></div>
                         <div class="form-card"><label for="edit-message" class="flex items-center text-xl font-bold text-gray-700 mb-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"></path></svg>اكتب رسالة منك لنفسك.</label><p class="text-gray-500 mb-4">تمهل قليلا وتفكر.. اجعلها مؤثرة تلامس عقلك وقلبك وروحك..</p><textarea id="edit-message" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea></div>
-                        
+
                         <button type="submit" class="w-full btn-update text-white font-bold py-4 px-4 rounded-lg text-xl">حفظ التعديلات</button>
                     </form>
                 </div>
@@ -1229,7 +1229,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- START: Achievements Modals -->
     <div class="modal fade" id="achievementsModal" tabindex="-1" aria-labelledby="achievementsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -1340,7 +1340,7 @@
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, arrayUnion, updateDoc, deleteDoc, limit, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, enableIndexedDbPersistence, doc, getDoc, setDoc, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, arrayUnion, updateDoc, deleteDoc, limit, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAGgZmhJ_mMezlf7xElisvzJ8l9D758d4g",
@@ -1354,6 +1354,16 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // تفعيل Offline Persistence
+        enableIndexedDbPersistence(db)
+          .catch((err) => {
+            if (err.code == 'failed-precondition') {
+              console.warn("Offline persistence failed: Multiple tabs open.");
+            } else if (err.code == 'unimplemented') {
+              console.warn("Offline persistence failed: Browser does not support it.");
+            }
+          });
 
         // START: Achievements Logic
         const milestones = [
@@ -1380,7 +1390,7 @@
             { days: 850, name: "وسام حكيم المثابرة", icon: "bi-mortarboard-fill" },
             { days: 1000, name: "وسام تاج الألفية", icon: "bi-trophy-fill" }
         ];
-        let lastCheckedDay = -1; 
+        let lastCheckedDay = -1;
         const congratsModalEl = document.getElementById('congratsAchievementModal');
         const congratsModal = new bootstrap.Modal(congratsModalEl);
 
@@ -1429,7 +1439,7 @@
                             console.error(`Error checking achievement for ${milestone.days} days:`, error);
                         }
                     } else {
-                        break; 
+                        break;
                     }
                 }
             } finally {
@@ -1440,7 +1450,7 @@
         async function displayAchievements() {
             const grid = document.getElementById('achievements-grid');
             const currentDays = window.currentStreakDays || 0;
-            grid.innerHTML = ''; 
+            grid.innerHTML = '';
 
             milestones.forEach(milestone => {
                 const requiredDays = milestone.days;
@@ -1457,7 +1467,7 @@
                     iconClass = 'bi bi-lock-fill';
                     cardSubText = `أكمل ${requiredDays} يوماً لفتحه`;
                 }
-                
+
                 card.innerHTML = `
                     <div class="achievement-card-icon"><i class="${iconClass}"></i></div>
                     <div class="achievement-card-title">${cardTitle}</div>
@@ -1547,7 +1557,7 @@
             leaderboardListPane.innerHTML = `<div class="loading-spinner-container"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
             leaderboardFooter.innerHTML = `<div class="d-flex justify-content-center align-items-center h-100"><div class="spinner-border spinner-border-sm text-light" role="status"></div></div>`;
             document.getElementById('banned-list-pane').innerHTML = '';
-            
+
             let allRankedUsers = [];
 
             showSpinner();
@@ -1575,14 +1585,14 @@
 
                 const usersRef = collection(db, "users");
                 const q = query(usersRef, orderBy("timerStartDate", "asc"));
-                
+
                 const querySnapshot = await getDocs(q);
-                
+
                 allRankedUsers = querySnapshot.docs.filter(doc => {
                     const data = doc.data();
                     return data.timerStartDate && data.role !== 'developer' && data.isBannedFromLeaderboard !== true;
                 });
-                
+
                 if (allRankedUsers.length === 0) {
                     leaderboardListPane.innerHTML = '<p class="text-center text-secondary mt-3">لا يوجد مستخدمون في لوحة الصدارة بعد.</p>';
                 } else {
@@ -1590,7 +1600,7 @@
                     allRankedUsers.forEach((userDoc, index) => {
                         const userData = userDoc.data();
                         const startDate = userData.timerStartDate.toDate();
-                        
+
                         // -- BEGIN ROBUST TIMEZONE FIX --
                         const startDayUTC = getUTCDayStart(startDate);
                         const todayUTC = getUTCDayStart(new Date());
@@ -1607,7 +1617,7 @@
                         let rankDisplay = rank <= 3 ? `<div class="leaderboard-rank-medal">${['🥇', '🥈', '🥉'][rank - 1]}</div>` : `<div class="leaderboard-rank">${rank}</div>`;
                         const profilePic = userData.photoURL || 'https://placehold.co/100x100/1e1e1e/fafafa?text=?';
                         const deleteButtonHTML = currentUserRole === 'developer' ? `<i class="bi bi-x-circle-fill leaderboard-delete-btn" data-userid="${userDoc.id}" title="حظر من لوحة الصدارة"></i>` : '';
-                        
+
                         leaderboardHTML += `
                             <li class="leaderboard-item ${rankClass}" id="user-rank-${userDoc.id}" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#userAchievementsModal" data-userid="${userDoc.id}">
                                 ${rankDisplay}
@@ -1622,7 +1632,7 @@
                     leaderboardHTML += '</ul>';
                     leaderboardListPane.innerHTML = leaderboardHTML;
                 }
-                
+
                 if (currentUserRole === 'developer') {
                     document.querySelectorAll('#leaderboardModal .leaderboard-delete-btn').forEach(button => {
                         button.addEventListener('click', async (event) => {
@@ -1693,7 +1703,7 @@
                 querySnapshot.forEach(doc => {
                     const achievement = doc.data();
                     const date = achievement.dateAwarded?.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' }) || 'غير محدد';
-                    
+
                     achievementsHTML += `
                         <div class="achievement-card">
                             <div class="achievement-card-icon"><i class="${achievement.icon || 'bi-trophy-fill'}"></i></div>
@@ -1820,10 +1830,10 @@
 
                 const leaderboardModalEl = document.getElementById('leaderboardModal');
                 leaderboardModalEl.addEventListener('show.bs.modal', displayLeaderboard);
-                
+
                 const userAchievementsModalEl = document.getElementById('userAchievementsModal');
                 userAchievementsModalEl.addEventListener('show.bs.modal', (event) => {
-                    const triggerElement = event.relatedTarget; 
+                    const triggerElement = event.relatedTarget;
                     if (triggerElement) {
                         const userId = triggerElement.getAttribute('data-userid');
                         if (userId) {
@@ -1836,10 +1846,10 @@
                         }
                     }
                 });
-                
+
                 modalsInitialized = true;
             }
-            
+
             function initializeAppLock() {
                 const lockData = getLockData();
                 if (!lockData.enabled) return;
@@ -1899,13 +1909,13 @@
 
             function setupGeminiFeatures() {
                 const inspirationBtn = document.getElementById('inspiration-btn');
-                
+
                 inspirationBtn.addEventListener('click', async () => {
                     const inspirationDisplay = document.getElementById('inspiration-display');
                     const inspirationText = document.getElementById('inspiration-text');
                     inspirationBtn.disabled = true;
                     inspirationBtn.innerHTML = `<span>لحظة أفكر لك بحل... <i class="bi bi-hourglass-split"></i></span>`;
-                    
+
                     let basePrompt = `أنا عندي رغبةاسمع يا صاحبي أنا فيني بلا وأحس إني على وشك أطيح في مشاهدة المقاطع الإباحية والرغبة قوية مرة أبغاك بصفتك ناصح أمين وفاهم على منهج السلف الصالح تعطيني حل عملي وفوري أقدر أسويه الحين عشان أطفي هذي النار
 
         لكن عندي شروط صارمة لازم تلتزم فيها بالحرف:
@@ -1924,10 +1934,10 @@
 
                     const generatedText = await callGeminiAPI(basePrompt);
                     if (generatedText && !generatedText.includes('خطأ')) lastSolution = generatedText;
-                    
+
                     let newImageIndex;
                     do { newImageIndex = Math.floor(Math.random() * natureImages.length); } while (newImageIndex === lastImageIndex && natureImages.length > 1);
-                    lastImageIndex = newImageIndex; 
+                    lastImageIndex = newImageIndex;
                     inspirationDisplay.style.backgroundImage = `url('${natureImages[newImageIndex]}')`;
                     inspirationText.innerHTML = generatedText.replace(/\n/g, '<br>');
                     inspirationDisplay.classList.remove('d-none');
@@ -1973,7 +1983,7 @@
                     if (generatedText && !generatedText.includes('خطأ') && !generatedText.includes('مشكلة')) {
                         lastSalafStory = generatedText;
                     }
-                    
+
                     let newImageIndex;
                     do {
                         newImageIndex = Math.floor(Math.random() * natureImages.length);
@@ -1982,7 +1992,7 @@
                     salafStoryDisplay.style.backgroundImage = `url('${natureImages[newImageIndex]}')`;
 
                     salafStoryText.innerHTML = generatedText.replace(/\n/g, '<br>');
-                    
+
                     salafStoryBtn.disabled = false;
                     salafStoryBtn.innerHTML = `<span>📖 أبغى قصة ثانية</span>`;
                 });
@@ -1996,9 +2006,9 @@
                         document.body.style.visibility = 'visible';
                         initializeAppLock();
 
-                        setInterval(() => { if (document.visibilityState === 'visible') localStorage.setItem('app_last_unlock', Date.now()); }, 60 * 1000); 
+                        setInterval(() => { if (document.visibilityState === 'visible') localStorage.setItem('app_last_unlock', Date.now()); }, 60 * 1000);
                         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') initializeAppLock(); });
-                        
+
                         initializeGlobalChatNotifications(user.uid);
                         listenForBackgroundImageChanges();
 
@@ -2025,21 +2035,21 @@
                             const userDoc = await getDoc(userDocRef);
                             if (userDoc.exists()) {
                                 currentUserRole = userDoc.data().role || 'user';
-                                if (currentUserRole === 'developer') { 
-                                    openSendModalBtn.classList.remove('d-none'); 
+                                if (currentUserRole === 'developer') {
+                                    openSendModalBtn.classList.remove('d-none');
                                     document.getElementById('developer-background-options').classList.remove('d-none');
                                 }
                                 if (userDoc.data().timerStartDate) {
                                     startTime = userDoc.data().timerStartDate.toDate();
-                                    startTimerBtn.classList.add('d-none'); 
-                                    timerSettingsIcon.classList.remove('d-none'); 
+                                    startTimerBtn.classList.add('d-none');
+                                    timerSettingsIcon.classList.remove('d-none');
                                     updateTimer();
                                     if (timerInterval) clearInterval(timerInterval);
                                     timerInterval = setInterval(updateTimer, 1000);
                                 } else {
-                                    startTimerBtn.classList.remove('d-none'); 
-                                    timerSettingsIcon.classList.add('d-none'); 
-                                    updateTimerDisplay(0,0,0,0); 
+                                    startTimerBtn.classList.remove('d-none');
+                                    timerSettingsIcon.classList.add('d-none');
+                                    updateTimerDisplay(0,0,0,0);
                                 }
                             } else {
                                 await setDoc(userDocRef, { role: 'user', lastSeenNotificationTimestamp: new Date(0), displayName: user.displayName, photoURL: user.photoURL }, { merge: true });
@@ -2146,7 +2156,7 @@
                     await updateDoc(doc(db, "users", user.uid), { lastSeenNotificationTimestamp: latestNotificationTimestamp });
                 }
             });
-            
+
             const sendNotificationModal = new bootstrap.Modal(document.getElementById('send-notification-modal'));
             document.getElementById('send-notification-btn').addEventListener('click', async () => {
                 const title = document.getElementById('notification-title').value.trim();
@@ -2166,7 +2176,7 @@
             const dateElement = document.getElementById('current-date');
             const [daysValueEl, hoursValueEl, minutesValueEl, secondsValueEl] = ['days-value', 'hours-value', 'minutes-value', 'seconds-value'].map(id => document.getElementById(id));
             const [daysFillEl, hoursFillEl, minutesFillEl, secondsFillEl] = ['days-fill', 'hours-fill', 'minutes-fill', 'seconds-fill'].map(id => document.getElementById(id));
-            
+
             dateElement.textContent = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
             function updateTimerDisplay(d, h, m, s) {
@@ -2200,12 +2210,12 @@
             document.querySelector('.timer-settings-icon').addEventListener('click', () => settingsModalOverlay.classList.add('show'));
             document.getElementById('close-settings-button').addEventListener('click', closeSettingsModal);
             document.getElementById('set-date-button').addEventListener('click', () => document.getElementById('date-time-picker').showPicker());
-            
+
             document.getElementById('date-time-picker').addEventListener('change', async (e) => {
                 if (!e.target.value) return;
                 const newStartTime = new Date(e.target.value);
                 if (isNaN(newStartTime.getTime())) return;
-                
+
                 showSpinner();
                 try {
                     const user = auth.currentUser;
@@ -2224,12 +2234,12 @@
             document.getElementById('reset-timer-button').addEventListener('click', () => { closeSettingsModal(); setTimeout(() => confirmResetModal.classList.add('show'), 300); });
             const closeConfirmModal = () => confirmResetModal.classList.remove('show');
             document.getElementById('cancel-reset-button').addEventListener('click', closeConfirmModal);
-            
+
             document.getElementById('confirm-reset-action-button').addEventListener('click', async () => {
                 showSpinner();
                 try {
                     const user = auth.currentUser;
-                    if (user && !user.isAnonymous) await resetAchievements(); 
+                    if (user && !user.isAnonymous) await resetAchievements();
                     const newStartTime = new Date();
                     if (user && !user.isAnonymous) {
                         await setDoc(doc(db, "users", user.uid), { timerStartDate: newStartTime }, { merge: true });
@@ -2246,7 +2256,7 @@
             const breathingPage = document.getElementById('breathing-page');
             const homePage = document.getElementById('home-page');
             const quotePage = document.getElementById('quote-page');
-            
+
             function stopBreathingCycle() {
                 breathingTimeouts.forEach(clearTimeout); breathingTimeouts = [];
                 if (countdownInterval) clearInterval(countdownInterval);
@@ -2257,10 +2267,10 @@
                 do { newImageIndex = Math.floor(Math.random() * natureImages.length); } while (newImageIndex === lastImageIndex);
                 lastImageIndex = newImageIndex;
                 quotePage.style.backgroundImage = `url('${natureImages[newImageIndex]}')`;
-                
+
                 breathingPage.classList.remove('active');
                 quotePage.classList.add('active');
-                
+
                 document.getElementById('quote-text').innerHTML = '<div class="spinner-border text-light"></div>';
                 const prompt = "بصفتك ناصح أمين على منهج السلف الصالح خاطب شخص على وشك يطيح في معصية العادة السرية أو مشاهدة الإباحية عطه كلام قوي ومباشر يجمع بين العقل والترهيب والتذكير بعواقب الفعل عشان يتراجع فورا تكلم باللهجة السعودية العامية وردك لازم يكون بدون تشكيل وبدون أي علامات ترقيم نهائيا وخليه قصير ومختصر وطبيعي كأنك تكلم خويك";
                 document.getElementById('quote-text').innerHTML = await callGeminiAPI(prompt);
@@ -2277,7 +2287,7 @@
                     breathingTimerEl.textContent = `الوقت المتبقي: ${remainingTime} ثانية`;
                     if (remainingTime < 0) { stopBreathingCycle(); showQuotePage(); }
                 }, 1000);
-                
+
                 const breathingTextEl = document.getElementById('breathing-text');
                 function cycle() {
                     breathingTextEl.textContent = 'شهيق';
@@ -2301,7 +2311,7 @@
                 stopBreathingCycle();
                 showQuotePage();
             });
-            
+
             const cardElement = document.querySelector('.progress-timer-card');
             const imageElement = document.getElementById('counter-image-bg');
             const overlayElement = document.querySelector('.image-background-overlay');
@@ -2321,7 +2331,7 @@
                     imageElement.classList.remove('visible');
                 }
             }
-            
+
             function listenForBackgroundImageChanges() {
                 onSnapshot(doc(db, "app_config", "background_image"), (doc) => {
                     setCounterBackgroundImage(doc.exists() ? doc.data().url : null);
@@ -2332,7 +2342,7 @@
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('upload_preset', 'back photo');
-                formData.append('folder', 'back photo'); 
+                formData.append('folder', 'back photo');
                 showSpinner();
                 try {
                     setImageButton.innerHTML = `<span>جاري الرفع...</span>`;
@@ -2347,7 +2357,7 @@
                      hideSpinner();
                 }
             }
-            
+
             async function updateBackgroundImageInFirestore(url) {
                 showSpinner();
                 try {
@@ -2387,7 +2397,7 @@
 
             const showCommitmentPage = (pageId) => {
                 Object.values(commitmentPages).forEach(page => {
-                    page.classList.remove('hidden'); 
+                    page.classList.remove('hidden');
                     if (page.id === pageId) {
                         page.classList.add('visible');
                     } else {
@@ -2594,7 +2604,7 @@
             const sleepPage = document.getElementById('sleep-improvement-page');
             const sleepAiBtn = document.getElementById('sleep-ai-btn');
             const backFromSleepBtn = document.getElementById('back-to-home-from-sleep-btn');
-            
+
             const logSection = document.getElementById('sleep-log-section');
             const questionSection = document.getElementById('daily-question-section');
             const analysisSection = document.getElementById('sleep-analysis-section');
@@ -2605,7 +2615,7 @@
             const submitSleepTimeBtn = document.getElementById('submit-sleep-time-btn');
             const cancelSleepTimeBtn = document.getElementById('cancel-sleep-time-btn');
 
-            
+
             const questionTextEl = document.getElementById('daily-question-text');
             const questionOptionsContainer = document.getElementById('daily-question-options-container');
 
@@ -2700,7 +2710,7 @@
                     saveSleepLogToLocalStorage(newLog);
                 }
             }
-            
+
             async function getWeeklyAnalysis() {
                  const user = auth.currentUser;
                 if (user && !user.isAnonymous) {
@@ -2743,7 +2753,7 @@
                 }
             }
             // --- END: Wrapper Functions ---
-            
+
             async function getSleepAIResponse(prompt) {
                  const fullPrompt = `انت مساعد متخصص في تحسين النوم باللهجة السعودية العامية ومهمتك تعطي نصايح وتحليلات بناء على معلومات المستخدم
 
@@ -2763,13 +2773,13 @@
                 analysisSection.classList.add('hidden-section');
                 section.classList.remove('hidden-section');
             }
-            
+
             function formatTime12Hour(time24) {
                 if (!time24) return '';
                 let [hours, minutes] = time24.split(':');
                 hours = parseInt(hours, 10);
                 const period = hours >= 12 ? 'مساء' : 'صباحا';
-                hours = hours % 12 || 12; 
+                hours = hours % 12 || 12;
                 return `${hours}:${minutes} ${period}`;
             }
 
@@ -2791,7 +2801,7 @@
                     formatted: `نمت لمدة ${hours} ساعات و ${minutes} دقايق`
                 };
             }
-            
+
             async function initSleepFeature() {
                 const todayStr = new Date().toISOString().split('T')[0];
                 const sleepLog = await getSleepLog();
@@ -2804,7 +2814,7 @@
                     showSection(logSection);
                 }
             }
-            
+
             cancelSleepTimeBtn.addEventListener('click', () => {
                 sleepTimeInput.value = '';
                 wakeTimeInput.value = '';
@@ -2828,21 +2838,21 @@
                 durationDisplay.classList.remove('hidden-section');
 
                 tempTimeData = { sleepTime, wakeTime, duration: duration.decimal };
-                
+
                 showDailyQuestion(tempTimeData);
             });
-            
+
             async function showDailyQuestion(timeData) {
                 let askedIndices = await getAskedQuestions();
                 if (askedIndices.length >= dailyQuestions.length) {
                     askedIndices = []; // Reset if all questions asked
                 }
-                
+
                 let nextQuestionIndex;
                 do {
                     nextQuestionIndex = Math.floor(Math.random() * dailyQuestions.length);
                 } while (askedIndices.includes(nextQuestionIndex));
-                
+
                 const question = dailyQuestions[nextQuestionIndex];
                 questionTextEl.textContent = question.text;
                 questionOptionsContainer.innerHTML = '';
@@ -2856,15 +2866,15 @@
                     };
                     questionOptionsContainer.appendChild(button);
                 });
-                
+
                 showSection(questionSection);
             }
-            
+
             async function handleDailyAnswer(timeData, questionKey, answer, questionIndex) {
                 let askedIndices = await getAskedQuestions();
                 askedIndices.push(questionIndex);
                 await saveAskedQuestions(askedIndices);
-                
+
                 const todayStr = new Date().toISOString().split('T')[0];
                 const sleepLog = await getSleepLog();
 
@@ -2883,7 +2893,7 @@
                 const updatedLog = [...filteredLog, newEntry];
                 await saveSleepLog(updatedLog);
 
-                showSleepAnalysis(true); 
+                showSleepAnalysis(true);
             }
 
             function showSleepAnalysis(forceRegenerate = false) {
@@ -2896,7 +2906,7 @@
                 const canvas = document.getElementById('sleepChart');
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
-                const sleepLog = (await getSleepLog()).slice(-7); 
+                const sleepLog = (await getSleepLog()).slice(-7);
 
                 const labels = sleepLog.map(d => new Date(d.date).toLocaleDateString('ar-EG', { weekday: 'short' }));
                 const durations = sleepLog.map(d => d.duration);
@@ -2907,7 +2917,7 @@
 
                 Chart.defaults.color = 'rgba(250, 250, 250, 0.7)';
                 Chart.defaults.borderColor = 'rgba(250, 250, 250, 0.2)';
-                
+
                 sleepChartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -2971,7 +2981,7 @@
 
             async function generateWeeklyAnalysis(forceRegenerate) {
                 const sleepLog = (await getSleepLog()).slice(-7);
-                
+
                 if (sleepLog.length < 1) {
                     weeklyAnalysisContainer.textContent = 'ما فيه بيانات كافية عشان اعطيك تحليل ابدأ سجل نومك اليوم';
                     return;
@@ -2988,10 +2998,10 @@
 
                 weeklyAnalysisContainer.innerHTML = `<div class="d-flex justify-content-center align-items-center p-4"><div class="spinner-border" role="status"></div></div>`;
                 analysisLastUpdatedEl.textContent = '';
-                
+
                 const summary = sleepLog.map(d => `في يوم ${new Date(d.date).toLocaleDateString('ar-EG', { weekday: 'long' })} نمت الساعة ${d.sleepTime} وصحيت الساعة ${d.wakeTime} يعني نمت تقريبا ${d.duration} ساعات وجاوبت على سؤال اليوم بـ ${d.dailyQuestion.answer}`).join(' و ');
                 const prompt = `هذا سجل نوم واحد لمدة اسبوع ${summary} بناء على هذي البيانات عطني تحليل مفصل باللهجة السعودية العامية وبدون اي علامات ترقيم او تشكيل ووضح له نمط نومه والاشياء الايجابية والسلبية وعطه نصايح عملية عشان يحسن نومه اكثر`;
-                
+
                 const analysisText = await getSleepAIResponse(prompt);
 
                 const newAnalysis = {
@@ -2999,9 +3009,9 @@
                     text: analysisText,
                     timestamp: new Date().toISOString()
                 };
-                
+
                 await saveWeeklyAnalysis(newAnalysis);
-                
+
                 weeklyAnalysisContainer.textContent = analysisText;
                 analysisLastUpdatedEl.textContent = `آخر تحديث للتحليل: الآن`;
             }
@@ -3017,19 +3027,28 @@
             // --- END: Sleep AI Logic ---
         });
 
+    </script>
+    <script>
+        // تسجيل Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(console.error);
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully.');
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
             });
         }
     </script>
-    
+
     <!-- Loading Spinner -->
     <div id="loading-spinner-overlay" class="loading-spinner-overlay">
         <div class="loading-spinner"></div>
     </div>
     <!-- End Loading Spinner -->
-    
+
 </body>
 </html>
 

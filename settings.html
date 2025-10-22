@@ -28,29 +28,29 @@
         }
         .page { display: flex; flex-direction: column; height: 100%; width: 100%; }
         .content-area { flex-grow: 1; overflow-y: auto; padding: 1rem; padding-bottom: 80px; }
-        .top-header { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            padding: 1rem; 
+        .top-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
             background-color: rgba(18, 18, 18, 0.5);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color); 
+            border-bottom: 1px solid var(--border-color);
         }
         .top-header h5 { font-weight: 700; margin: 0; }
-        .bottom-nav { 
-            display: flex; 
-            justify-content: space-around; 
-            padding: 0.5rem 0; 
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
             background-color: rgba(30, 30, 30, 0.5);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.2); 
-            position: fixed; 
-            bottom: 0; 
-            width: 100%; 
-            z-index: 100; 
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 100;
             border-top: 1px solid rgba(56, 56, 56, 0.5);
         }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--secondary-text-color); text-decoration: none; font-size: 0.75rem; cursor: pointer; width: 14%; height: 50px; justify-content: center; }
@@ -63,8 +63,8 @@
         /* --- إضافة جديدة: تنسيق عداد الإشعارات --- */
         .chat-notification-badge {
             position: absolute;
-            top: -8px; 
-            right: 25px; 
+            top: -8px;
+            right: 25px;
             background-color: var(--danger-color);
             color: white;
             border-radius: 50%;
@@ -207,7 +207,7 @@
             font-size: 1.2rem;
             letter-spacing: 0.5rem;
         }
-        
+
         /* START: Background Theme Styles */
         .theme-selector-container {
             display: flex;
@@ -251,7 +251,7 @@
         #theme-gradient {
              background-image: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
         }
-        
+
         body.solid-black-bg {
             background-image: none !important;
             background-color: #000000 !important;
@@ -270,6 +270,42 @@
             color: var(--secondary-text-color); /* لون نص مريح للعين */
         }
         /* END: About Developer Modal Text Style */
+
+        /* START: Loading Spinner Styles */
+         .loading-spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .loading-spinner-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 7px solid rgba(255, 255, 255, 0.2);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        /* END: Loading Spinner Styles */
     </style>
 </head>
 <body>
@@ -394,7 +430,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="modal fade" id="changeNameModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -412,7 +448,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="modal fade" id="logoutConfirmModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -534,10 +570,26 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
+        // --- START: Added Spinner Functions ---
+        function showSpinner() {
+            const spinner = document.getElementById('loading-spinner-overlay');
+            if (spinner) {
+                spinner.classList.add('show');
+            }
+        }
+
+        function hideSpinner() {
+            const spinner = document.getElementById('loading-spinner-overlay');
+            if (spinner) {
+                spinner.classList.remove('show');
+            }
+        }
+        // --- END: Added Spinner Functions ---
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, updateProfile, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        
+        import { getFirestore, doc, getDoc, updateDoc, setDoc, deleteDoc, collection, query, where, onSnapshot, Timestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyAGgZmhJ_mMezlf7xElisvzJ8l9D758d4g",
             authDomain: "my-chat-app-daaf8.firebaseapp.com",
@@ -546,19 +598,29 @@
             messagingSenderId: "789086064752",
             appId: "1:789086064752:web:d081f1b6832dabca1d64b5"
         };
-        
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
+
+        // تفعيل Offline Persistence
+        enableIndexedDbPersistence(db)
+          .catch((err) => {
+            if (err.code == 'failed-precondition') {
+              console.warn("Offline persistence failed: Multiple tabs open.");
+            } else if (err.code == 'unimplemented') {
+              console.warn("Offline persistence failed: Browser does not support it.");
+            }
+          });
+
         // --- START: Background Theme Logic ---
         function applyBackgroundPreference() {
             const savedTheme = localStorage.getItem('appBackgroundTheme') || 'default';
             const body = document.body;
             document.querySelectorAll('.theme-preview').forEach(el => el.classList.remove('active'));
-            
+
             body.classList.remove('solid-black-bg', 'gradient-blue-bg');
-            
+
             if (savedTheme === 'solid-black') {
                 body.classList.add('solid-black-bg');
                 document.getElementById('theme-black').classList.add('active');
@@ -569,7 +631,7 @@
                 document.getElementById('theme-default').classList.add('active');
             }
         }
-        
+
         document.querySelectorAll('.theme-preview').forEach(button => {
             button.addEventListener('click', () => {
                 const theme = button.dataset.theme;
@@ -598,7 +660,7 @@
                     chatBadge.style.display = 'none';
                 }
             }
-            
+
             if (window.publicListenerUnsubscribe) window.publicListenerUnsubscribe();
             if (window.privateListenerUnsubscribe) window.privateListenerUnsubscribe();
 
@@ -669,42 +731,49 @@
         const CLOUDINARY_UPLOAD_PRESET = "profile_photo";
 
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                initializeGlobalChatNotifications(user.uid);
-                if (!user.isAnonymous) {
-                    isVisitor = false;
-                    currentUser = user;
-                    const userDocRef = doc(db, "users", currentUser.uid);
-                    const userDoc = await getDoc(userDocRef);
-                    if (userDoc.exists()) { currentUserData = userDoc.data(); }
-                    logoutModalMessage.textContent = "هل أنت متأكد من رغبتك في تسجيل الخروج؟";
-                    confirmLogoutBtn.textContent = "تسجيل الخروج";
-                    loadUserProfile();
-                    checkNameChangeStatus();
+            showSpinner();
+            try {
+                if (user) {
+                    initializeGlobalChatNotifications(user.uid);
+                    if (!user.isAnonymous && user.emailVerified) { // Check if user is registered AND email is verified
+                        isVisitor = false;
+                        currentUser = user;
+                        const userDocRef = doc(db, "users", currentUser.uid);
+                        const userDoc = await getDoc(userDocRef);
+                        if (userDoc.exists()) { currentUserData = userDoc.data(); }
+                        logoutModalMessage.textContent = "هل أنت متأكد من رغبتك في تسجيل الخروج؟";
+                        confirmLogoutBtn.textContent = "تسجيل الخروج";
+                        loadUserProfile();
+                        checkNameChangeStatus();
+                    } else { // Handle anonymous users or unverified registered users
+                        isVisitor = true;
+                        currentUser = user;
+                        logoutModalMessage.textContent = "هل أنت متأكد من رغبتك في العودة إلى صفحة تسجيل الدخول؟";
+                        confirmLogoutBtn.textContent = "العودة";
+                        loadVisitorProfile();
+                        checkVisitorNameChangeStatus();
+                        // Disable features for visitors/unverified if needed
+                        document.querySelector('.delete-account-btn').style.display = 'none'; // Hide delete button for visitors
+                    }
                 } else {
-                    isVisitor = true;
-                    currentUser = user; 
-                    logoutModalMessage.textContent = "هل أنت متأكد من رغبتك في العودة إلى صفحة تسجيل الدخول؟";
-                    confirmLogoutBtn.textContent = "العودة";
-                    loadVisitorProfile();
-                    checkVisitorNameChangeStatus();
+                     window.location.href = './login.html';
                 }
-            } else {
-                 window.location.href = './login.html'; 
-            }
-            initializeAppLock();
-            
-            setInterval(() => {
-                if (document.visibilityState === 'visible') {
-                    localStorage.setItem('app_last_unlock', Date.now());
-                }
-            }, 60 * 1000);
+                initializeAppLock();
 
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') {
-                    initializeAppLock();
-                }
-            });
+                setInterval(() => {
+                    if (document.visibilityState === 'visible') {
+                        localStorage.setItem('app_last_unlock', Date.now());
+                    }
+                }, 60 * 1000);
+
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        initializeAppLock();
+                    }
+                });
+            } finally {
+                hideSpinner();
+            }
         });
 
         function getVisitorData() { try { return JSON.parse(localStorage.getItem('visitorProfile')) || {}; } catch(e) { return {}; } }
@@ -754,8 +823,8 @@
         async function loadUserProfile() {
             if (!currentUser) return;
             newNameInput.value = currentUser.displayName || '';
-            if (currentUserData && currentUserData.photoURL) { profilePicPreview.src = currentUserData.photoURL; } 
-            else if (currentUser.photoURL) { profilePicPreview.src = currentUser.photoURL; } 
+            if (currentUserData && currentUserData.photoURL) { profilePicPreview.src = currentUserData.photoURL; }
+            else if (currentUser.photoURL) { profilePicPreview.src = currentUser.photoURL; }
             else { profilePicPreview.src = "https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png"; }
         }
         saveNameBtn.addEventListener('click', async () => {
@@ -764,17 +833,17 @@
             saveNameBtn.disabled = true;
             nameChangeStatus.textContent = 'جاري تحديث الاسم...';
             nameChangeStatus.className = 'form-text mt-2 text-center';
-            if (isVisitor) {
-                const visitorData = getVisitorData();
-                visitorData.displayName = newName;
-                visitorData.last_name_change = new Date().toISOString();
-                saveVisitorData(visitorData);
-                nameChangeStatus.textContent = 'تم تحديث اسم الزائر بنجاح!';
-                nameChangeStatus.className = 'form-text mt-2 text-center text-success';
-                saveNameBtn.disabled = false;
-                checkVisitorNameChangeStatus();
-            } else {
-                 try {
+            showSpinner();
+            try {
+                if (isVisitor) {
+                    const visitorData = getVisitorData();
+                    visitorData.displayName = newName;
+                    visitorData.last_name_change = new Date().toISOString();
+                    saveVisitorData(visitorData);
+                    nameChangeStatus.textContent = 'تم تحديث اسم الزائر بنجاح!';
+                    nameChangeStatus.className = 'form-text mt-2 text-center text-success';
+                    checkVisitorNameChangeStatus();
+                } else {
                     await updateProfile(auth.currentUser, { displayName: newName });
                     const userDocRef = doc(db, "users", currentUser.uid);
                     const newTimestamp = new Date();
@@ -784,14 +853,17 @@
                     checkNameChangeStatus();
                     nameChangeStatus.textContent = 'تم تحديث اسمك بنجاح!';
                     nameChangeStatus.className = 'form-text mt-2 text-center text-success';
-                } catch (error) {
-                    console.error("Error updating name:", error);
-                    nameChangeStatus.textContent = 'حدث خطأ أثناء تحديث الاسم.';
-                    nameChangeStatus.className = 'form-text mt-2 text-center text-danger';
-                } finally { saveNameBtn.disabled = false; }
+                }
+            } catch (error) {
+                console.error("Error updating name:", error);
+                nameChangeStatus.textContent = 'حدث خطأ أثناء تحديث الاسم.';
+                nameChangeStatus.className = 'form-text mt-2 text-center text-danger';
+            } finally {
+                saveNameBtn.disabled = false;
+                hideSpinner();
             }
         });
-        
+
         changePicButton.addEventListener('click', () => { profilePicInput.click(); });
         profilePicInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files[0]) {
@@ -808,15 +880,18 @@
             formData.append('file', file);
             formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
             uploadStatus.textContent = 'جاري رفع الصورة...';
+            showSpinner();
             try {
                 const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
                 const data = await response.json();
-                if (data.secure_url) { return data.secure_url; } 
+                if (data.secure_url) { return data.secure_url; }
                 else { throw new Error('Cloudinary upload failed'); }
             } catch (error) {
                 console.error("Cloudinary Upload Error:", error);
                 uploadStatus.textContent = 'خطأ في رفع الصورة.';
                 return null;
+            } finally {
+                hideSpinner();
             }
         }
         savePicButton.addEventListener('click', async () => {
@@ -824,6 +899,7 @@
             uploadStatus.textContent = 'يتم رفع الصورة...';
             savePicButton.disabled = true;
             changePicButton.disabled = true;
+            showSpinner();
             try {
                 const downloadURL = await uploadToCloudinary(selectedFile);
                 if (downloadURL) {
@@ -847,19 +923,23 @@
             } finally {
                 savePicButton.disabled = false;
                 changePicButton.disabled = false;
+                hideSpinner();
             }
         });
-        
+
         confirmLogoutBtn.addEventListener('click', () => {
+             showSpinner();
             signOut(auth).then(() => {
-                localStorage.setItem('app_last_unlock', Date.now());
+                localStorage.setItem('app_last_unlock', Date.now()); // Ensure app stays unlocked
                 window.location.href = './login.html';
             }).catch((error) => {
                 console.error('Sign out error', error);
                 alert('حدث خطأ أثناء محاولة الخروج.');
+            }).finally(() => {
+                 hideSpinner();
             });
         });
-        
+
         // START: Delete Account Logic
         deleteConfirmInput.addEventListener('input', () => {
             const typedText = deleteConfirmInput.value.trim().toLowerCase();
@@ -895,21 +975,28 @@
         async function handleDeleteAccount(password) {
             submitReauthBtn.disabled = true;
             submitReauthBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري التحقق...';
-
+            showSpinner();
             try {
                 const user = auth.currentUser;
                 const credential = EmailAuthProvider.credential(user.email, password);
-                
+
                 // Re-authenticate the user
                 await reauthenticateWithCredential(user, credential);
-                
+
                 // If re-authentication is successful, proceed with deletion
-                // 1. Delete Firestore document
+                // 1. Delete Firestore document (handle potential non-existence)
                 const userDocRef = doc(db, "users", user.uid);
-                await deleteDoc(userDocRef);
+                try {
+                    await deleteDoc(userDocRef);
+                    console.log("Firestore document deleted.");
+                } catch (firestoreError) {
+                    console.warn("Could not delete Firestore document or it didn't exist:", firestoreError);
+                }
 
                 // 2. Delete user from Firebase Auth
                 await deleteUser(user);
+                console.log("Firebase Auth user deleted.");
+
 
                 // 3. Redirect to login page
                 alert("تم حذف حسابك بنجاح.");
@@ -919,7 +1006,7 @@
                 console.error("Delete account error:", error);
                 reauthPasswordModal.hide(); // Hide re-auth modal on failure
                 deleteAccountModal.show(); // Show the initial delete modal again
-                
+
                 if (error.code === 'auth/wrong-password') {
                     deleteAccountStatus.textContent = 'كلمة المرور غير صحيحة. فشلت عملية الحذف.';
                 } else if (error.code === 'auth/requires-recent-login') {
@@ -933,6 +1020,7 @@
                 submitReauthBtn.disabled = false;
                 submitReauthBtn.innerHTML = 'متابعة';
                 reauthPasswordInput.value = ''; // Clear password field
+                hideSpinner();
             }
         }
         // END: Delete Account Logic
@@ -950,7 +1038,7 @@
         const passcodeError = document.getElementById('passcode-error');
         const unlockBtn = document.getElementById('unlock-btn');
         const passcodeInput = document.getElementById('passcode-input');
-        
+
         const mainPageLockIcon = document.getElementById('main-page-lock-icon');
 
         const RELOCK_TIME = 3 * 60 * 1000;
@@ -967,7 +1055,7 @@
             localStorage.setItem('app_lock_config', JSON.stringify(data));
             window.dispatchEvent(new Event('storage'));
         }
-        
+
         function syncLockState() {
             const lockData = getLockData();
             appLockSwitch.checked = lockData.enabled;
@@ -983,7 +1071,7 @@
             if (!lockData.enabled) {
                 return;
             }
-            
+
             const lastUnlock = localStorage.getItem('app_last_unlock') || 0;
             const timeSinceUnlock = Date.now() - lastUnlock;
 
@@ -1003,7 +1091,7 @@
                 }
             } else {
                 lockData.enabled = false;
-                lockData.passcode = null; 
+                lockData.passcode = null;
                 saveLockData(lockData);
             }
             syncLockState();
@@ -1064,25 +1152,38 @@
                 handleUnlock();
             }
         });
-        
+
         if (mainPageLockIcon) {
             mainPageLockIcon.addEventListener('click', () => {
                 localStorage.removeItem('app_last_unlock');
                 initializeAppLock();
             });
         }
-        
+
         window.addEventListener('storage', () => {
             syncLockState();
         });
 
     </script>
-    
+
     <!-- Loading Spinner -->
     <div id="loading-spinner-overlay" class="loading-spinner-overlay">
         <div class="loading-spinner"></div>
     </div>
     <!-- End Loading Spinner -->
-    
+    <script>
+        // تسجيل Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully.');
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>

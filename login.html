@@ -227,6 +227,42 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* START: Loading Spinner Styles */
+         .loading-spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .loading-spinner-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 7px solid rgba(255, 255, 255, 0.2);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        /* END: Loading Spinner Styles */
     </style>
 </head>
 <body style="visibility: hidden;">
@@ -273,7 +309,7 @@
             <div id="auth-message" class="alert mt-3 d-none"></div>
             <p class="mt-4 text-muted"><a href="#" id="back-to-initial-view"><i class="fas fa-arrow-right me-1"></i> العودة</a></p>
         </div>
-        
+
         <!-- START: Password Reset View (Hidden by default) -->
         <div id="reset-password-view" class="d-none view-transition">
             <h2><i class="fas fa-lock me-2"></i> إعادة تعيين كلمة المرور</h2>
@@ -292,6 +328,22 @@
     </div>
 
     <script type="module">
+        // --- START: Added Spinner Functions ---
+        function showSpinner() {
+            const spinner = document.getElementById('loading-spinner-overlay');
+            if (spinner) {
+                spinner.classList.add('show');
+            }
+        }
+
+        function hideSpinner() {
+            const spinner = document.getElementById('loading-spinner-overlay');
+            if (spinner) {
+                spinner.classList.remove('show');
+            }
+        }
+        // --- END: Added Spinner Functions ---
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, onAuthStateChanged, signInAnonymously, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -312,7 +364,7 @@
         const emailLoginView = document.getElementById('email-login-view');
         const showEmailLoginBtn = document.getElementById('show-email-login-btn');
         const backToInitialViewLink = document.getElementById('back-to-initial-view');
-        
+
         const resetPasswordView = document.getElementById('reset-password-view');
         const forgotPasswordLink = document.getElementById('forgot-password-link');
         const backToLoginViewLink = document.getElementById('back-to-login-view');
@@ -327,7 +379,7 @@
                     setTimeout(() => view.classList.add('active'), 10);
                 } else {
                     view.classList.remove('active');
-                    setTimeout(() => view.classList.add('d-none'), 600); 
+                    setTimeout(() => view.classList.add('d-none'), 600);
                 }
             });
         }
@@ -359,7 +411,7 @@
             authMessage.className = `alert mt-3 ${isError ? 'alert-danger' : 'alert-success'} show`;
             authMessage.classList.remove('d-none');
         }
-        
+
         function showResetMessage(message, isError = true) {
             resetMessage.textContent = message;
             resetMessage.className = `alert mt-3 ${isError ? 'alert-danger' : 'alert-success'} show`;
@@ -367,11 +419,14 @@
         }
 
         onAuthStateChanged(auth, user => {
+             showSpinner(); // Show spinner on initial load check
             if (user && (user.emailVerified || user.isAnonymous)) {
                 window.location.href = 'main.html';
+                // Spinner will hide on the next page load
             } else {
                 document.body.style.visibility = 'visible';
                 initialView.classList.add('active');
+                hideSpinner(); // Hide spinner if user is not redirected
             }
         });
 
@@ -384,6 +439,7 @@
             }
             signinButton.disabled = true;
             signinButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري تسجيل الدخول...';
+            showSpinner(); // Show spinner during sign-in attempt
 
             setPersistence(auth, browserLocalPersistence)
                 .then(() => {
@@ -394,13 +450,16 @@
                         showAuthMessage("لم يتم التحقق من بريدك الإلكتروني. الرجاء التحقق من صندوق الوارد الخاص بك.");
                         signinButton.disabled = false;
                         signinButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+                        hideSpinner(); // Hide spinner if email not verified
                     }
+                    // If verified, redirection happens via onAuthStateChanged, no need to hide spinner here
                 })
                 .catch(error => {
                     console.error("Sign-in or persistence failed:", error);
                     showAuthMessage("خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة.");
                     signinButton.disabled = false;
                     signinButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+                    hideSpinner(); // Hide spinner on sign-in failure
                 });
         });
 
@@ -408,7 +467,8 @@
         guestSigninButton.addEventListener('click', () => {
             guestSigninButton.disabled = true;
             guestSigninButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الدخول كضيف...';
-            
+            showSpinner(); // Show spinner during guest sign-in
+
             setPersistence(auth, browserLocalPersistence)
                 .then(() => {
                     return signInAnonymously(auth);
@@ -418,7 +478,9 @@
                     showAuthMessage("حدث خطأ أثناء تسجيل الدخول كضيف. الرجاء المحاولة مرة أخرى.");
                     guestSigninButton.disabled = false;
                     guestSigninButton.innerHTML = '<i class="fas fa-user-secret"></i> الدخول كضيف';
+                    hideSpinner(); // Hide spinner on anonymous sign-in failure
                 });
+             // Redirection happens via onAuthStateChanged if successful
         });
 
         resetPasswordButton.addEventListener('click', () => {
@@ -428,26 +490,43 @@
             }
             resetPasswordButton.disabled = true;
             resetPasswordButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الإرسال...';
+            showSpinner(); // Show spinner during password reset
+
             sendPasswordResetEmail(auth, email)
                 .then(() => {
                     showResetMessage("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد (وقد تجده في البريد العشوائي spam).", false);
                     resetPasswordButton.disabled = false;
                     resetPasswordButton.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال رابط إعادة التعيين';
+                    hideSpinner(); // Hide spinner after successful send
                 })
                 .catch((error) => {
                     showResetMessage("حدث خطأ: لم يتم العثور على حساب بهذا البريد الإلكتروني. الرجاء التأكد من صحة البريد الإلكتروني.");
                     resetPasswordButton.disabled = false;
                     resetPasswordButton.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال رابط إعادة التعيين';
+                    hideSpinner(); // Hide spinner on reset failure
                 });
         });
 
     </script>
-    
+
     <!-- Loading Spinner -->
     <div id="loading-spinner-overlay" class="loading-spinner-overlay">
         <div class="loading-spinner"></div>
     </div>
     <!-- End Loading Spinner -->
-
+<script>
+    // تسجيل Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('Service Worker registered successfully.');
+                })
+                .catch(error => {
+                    console.error('Service Worker registration failed:', error);
+                });
+        });
+    }
+</script>
 </body>
 </html>
