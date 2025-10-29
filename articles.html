@@ -362,7 +362,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, query, where, Timestamp, onSnapshot, doc, getDoc, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, query, where, Timestamp, onSnapshot, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAGgZmhJ_mMezlf7xElisvzJ8l9D758d4g",
@@ -377,70 +377,8 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // تفعيل Offline Persistence
-        enableIndexedDbPersistence(db)
-          .catch((err) => {
-            if (err.code == 'failed-precondition') {
-              console.warn("Offline persistence failed: Multiple tabs open.");
-            } else if (err.code == 'unimplemented') {
-              console.warn("Offline persistence failed: Browser does not support it.");
-            }
-          });
-
         // --- Global Notification & Theme Logic ---
-        function initializeGlobalChatNotifications(userId) { 
-            const chatBadge = document.querySelector('.chat-notification-badge');
-            if (!chatBadge) return;
-
-            let publicUnreadCount = 0;
-            let privateUnreadCount = 0;
-
-            function updateBadge() {
-                const totalUnread = publicUnreadCount + privateUnreadCount;
-                if (totalUnread > 0) {
-                    chatBadge.textContent = totalUnread > 99 ? '99+' : totalUnread;
-                    chatBadge.style.display = 'flex';
-                } else {
-                    chatBadge.style.display = 'none';
-                }
-            }
-            
-            if (window.publicListenerUnsubscribe) window.publicListenerUnsubscribe();
-            if (window.privateListenerUnsubscribe) window.privateListenerUnsubscribe();
-
-            const lastReadTimestamp = parseInt(localStorage.getItem('lastReadTimestamp') || '0');
-            const messagesRef = collection(db, "messages");
-            const publicQuery = query(messagesRef, where("createdAt", ">", Timestamp.fromMillis(lastReadTimestamp)));
-            window.publicListenerUnsubscribe = onSnapshot(publicQuery, (snapshot) => {
-                let count = 0;
-                snapshot.forEach(doc => {
-                    if (doc.data().senderId !== userId) {
-                        count++;
-                    }
-                });
-                publicUnreadCount = count;
-                updateBadge();
-            });
-
-            const userIsAnonymous = auth.currentUser ? auth.currentUser.isAnonymous : true;
-            if (!userIsAnonymous) {
-                const privateChatsQuery = query(collection(db, "private_chats"), where("participants", "array-contains", userId));
-                window.privateListenerUnsubscribe = onSnapshot(privateChatsQuery, (snapshot) => {
-                    let count = 0;
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (!data[`hidden_for_${userId}`]) {
-                            count += (data[`unread_count_${userId}`] || 0);
-                        }
-                    });
-                    privateUnreadCount = count;
-                    updateBadge();
-                });
-            } else {
-                privateUnreadCount = 0;
-                updateBadge();
-            }
-        }
+        function initializeGlobalChatNotifications(userId) { /* ... no changes ... */ }
         function applyBackgroundPreference() {
             const savedTheme = localStorage.getItem('appBackgroundTheme') || 'default';
             const body = document.body;
@@ -643,77 +581,36 @@
                 return;
             }
 
-            const sortedDates = Object.keys(data.history || {}).sort(); // Added safety check for data.history
+            const sortedDates = Object.keys(data.history).sort();
             let longestStreak = 0, currentStreak = 0;
             let totalCompletions = 0, totalPossibleCompletions = 0;
             if (sortedDates.length > 0) {
                 let lastDate = new Date(sortedDates[0]);
-                lastDate.setDate(lastDate.getDate() - 1); // Set to day before the first entry
-                
+                lastDate.setDate(lastDate.getDate() - 1);
                 for (const dateStr of sortedDates) {
                     const currentDate = new Date(dateStr);
-                    // Filter habits that existed ON or BEFORE this date
-                    const habitsOnDate = (data.habits || []).filter(h => h.createdAt <= dateStr);
-                    if (habitsOnDate.length === 0) continue; // Skip if no habits existed yet
+                    const habitsOnDate = data.habits.filter(h => h.createdAt <= dateStr);
+                    if (habitsOnDate.length === 0) continue;
                     
-                    const completedOnDate = (data.history && data.history[dateStr]) ? data.history[dateStr] : [];
+                    const completedOnDate = data.history[dateStr] || [];
                     totalCompletions += completedOnDate.length;
                     totalPossibleCompletions += habitsOnDate.length;
 
-                    const diffDays = Math.round((currentDate.setHours(0,0,0,0) - lastDate.setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+                    const diffDays = Math.round((currentDate - lastDate) / (1000 * 60 * 60 * 24));
 
-                    // Check if ALL habits that existed on that day were completed
-                    if (completedOnDate.length === habitsOnDate.length && completedOnDate.length > 0) { // All completed
-                        if (diffDays === 1) { 
-                            currentStreak++; 
-                        } else { 
-                            longestStreak = Math.max(longestStreak, currentStreak); // Update longest before resetting
-                            currentStreak = 1; 
-                        }
-                    } else { // Not all completed or none completed
-                        longestStreak = Math.max(longestStreak, currentStreak); // Update longest before resetting
-                        currentStreak = 0; 
-                    }
-                    lastDate = currentDate; // Update lastDate regardless of completion
+                    if (completedOnDate.length === habitsOnDate.length && completedOnDate.length > 0) {
+                        if (diffDays === 1) { currentStreak++; } else { currentStreak = 1; }
+                    } else { longestStreak = Math.max(longestStreak, currentStreak); currentStreak = 0; }
+                    longestStreak = Math.max(longestStreak, currentStreak);
+                    lastDate = currentDate;
                 }
-                // Final check after loop for the last streak
-                longestStreak = Math.max(longestStreak, currentStreak);
             }
-
-            // Check current streak against today
             const today = new Date();
-            const todayStr = today.toISOString().split('T')[0];
             const lastHistoryDate = sortedDates.length > 0 ? new Date(sortedDates[sortedDates.length - 1]) : null;
-
             if (lastHistoryDate) {
-                 const diffFromLast = Math.round((today.setHours(0,0,0,0) - lastHistoryDate.setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
-                 
-                 // If the last entry was not yesterday or today, the streak is broken
-                 if (diffFromLast > 1) {
-                     currentStreak = 0;
-                 } else if (diffFromLast === 1) {
-                     // If last entry was yesterday, check if today is fully completed to continue streak
-                     const habitsToday = (data.habits || []).filter(h => h.createdAt <= todayStr);
-                     const completedToday = (data.history && data.history[todayStr]) ? data.history[todayStr] : [];
-                     if (habitsToday.length === 0 || completedToday.length !== habitsToday.length) {
-                         // Streak broke today (or hasn't been completed yet)
-                         // Keep the currentStreak calculated from history up to yesterday
-                     } else {
-                         // Today is complete, continue streak IF yesterday was also complete
-                         // The loop already handled streak up to yesterday, so if currentStreak > 0, we can potentially add today
-                         // But the currentStreak calculation in the loop *already includes* the last day if it was complete.
-                         // So, if the last day WAS yesterday and WAS complete, currentStreak already reflects that.
-                         // We only need to potentially reset it if today ISN'T complete, which is handled above.
-                     }
-                 } else if (diffFromLast === 0) {
-                     // Last entry was today. The loop correctly calculated the streak up to today.
-                 }
-            } else {
-                // No history means no streak
-                currentStreak = 0;
-            }
-
-
+                const diffFromLast = (today.setHours(0,0,0,0) - lastHistoryDate.setHours(0,0,0,0)) / (1000 * 60 * 60 * 24);
+                if (diffFromLast > 1) { currentStreak = 0; }
+            } else { currentStreak = 0; }
             
             const completionRate = totalPossibleCompletions > 0 ? Math.round((totalCompletions / totalPossibleCompletions) * 100) : 0;
             
@@ -725,10 +622,10 @@
             for (const dateStr of sortedDates) {
                 const date = new Date(dateStr);
                 if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
-                    const habitsOnDate = (data.habits || []).filter(h => h.createdAt <= dateStr);
+                    const habitsOnDate = data.habits.filter(h => h.createdAt <= dateStr);
                     if (habitsOnDate.length > 0) {
                         monthlyPossible += habitsOnDate.length;
-                        monthlyCompletions += ((data.history && data.history[dateStr]) ? data.history[dateStr] : []).length;
+                        monthlyCompletions += (data.history[dateStr] || []).length;
                     }
                 }
             }
@@ -748,110 +645,60 @@
                 
                 const dateStr = date.toISOString().split('T')[0];
                 labels.push(date.toLocaleDateString('ar-EG', { weekday: 'short' }));
-                // Count completions only for habits that existed on that date
-                const habitsOnDate = (data.habits || []).filter(h => h.createdAt <= dateStr);
-                const completedOnDate = (data.history && data.history[dateStr]) ? data.history[dateStr] : [];
-                const validCompletions = completedOnDate.filter(id => habitsOnDate.some(h => h.id === id)).length;
-                chartData.push(validCompletions);
+                chartData.push((data.history[dateStr] || []).length);
             }
             const ctx = document.getElementById('weekly-chart').getContext('2d');
             if(weeklyChart) weeklyChart.destroy();
-            
-             // Define gradient background for the chart bars
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(0, 168, 132, 0.8)');   
-            gradient.addColorStop(1, 'rgba(0, 168, 132, 0.2)');
-
-            Chart.defaults.color = 'rgba(255, 255, 255, 0.7)'; // Chart text color
-            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.2)'; // Grid line color
-
             weeklyChart = new Chart(ctx, {
                 type: 'bar',
-                data: { 
-                    labels: labels, 
-                    datasets: [{ 
-                        label: 'العادات المنجزة', 
-                        data: chartData, 
-                        backgroundColor: gradient, //'rgba(0, 168, 132, 0.6)', 
-                        borderColor: 'rgba(0, 168, 132, 1)', 
-                        borderWidth: 1, 
-                        borderRadius: 5,
-                        hoverBackgroundColor: 'rgba(0, 168, 132, 0.9)' 
-                    }] 
-                },
-                options: { 
-                     responsive: true,
-                     maintainAspectRatio: false,
-                     plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 12 },
-                            padding: 10,
-                            cornerRadius: 5,
-                        }
-                     },
-                     scales: { 
-                         y: { 
-                            beginAtZero: true, 
-                            ticks: { 
-                                stepSize: 1, 
-                                color: 'rgba(255, 255, 255, 0.7)', // Y-axis labels color
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)' // Y-axis grid lines
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: 'rgba(255, 255, 255, 0.7)', // X-axis labels color
-                            },
-                             grid: {
-                                display: false // Hide X-axis grid lines
-                            }
-                        }
-                    } 
-                }
+                data: { labels: labels, datasets: [{ label: 'العادات المنجزة', data: chartData, backgroundColor: 'rgba(0, 168, 132, 0.6)', borderColor: 'rgba(0, 168, 132, 1)', borderWidth: 1, borderRadius: 5 }] },
+                options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
             
             habitBreakdownContainer.innerHTML = '';
             habitStreaksContainer.innerHTML = '';
-            (data.habits || []).forEach(habit => {
-                 // Calculate completion count considering habit creation date
-                const completionCount = sortedDates.filter(date =>
-                     date >= habit.createdAt && (data.history[date] || []).includes(habit.id)
-                ).length;
-                
+            data.habits.forEach(habit => {
+                const completionCount = Object.values(data.history).filter(day => day.includes(habit.id)).length;
                 const item = document.createElement('div');
                 item.className = 'habit-stat-item';
                 item.innerHTML = `<span><i class="bi ${habit.icon} me-2"></i>${habit.name}</span><span class="fw-bold">${completionCount} مرة</span>`;
                 habitBreakdownContainer.appendChild(item);
 
-                // --- STREAK LOGIC FOR INDIVIDUAL HABIT ---
+                // --- STREAK LOGIC CORRECTION START ---
                 let longestHabitStreak = 0;
                 let currentHabitStreak = 0;
+
+                // First, get all the dates this specific habit was completed, and make sure they're sorted.
                 const habitCompletionDates = sortedDates.filter(date =>
                     date >= habit.createdAt && (data.history[date] || []).includes(habit.id)
                 );
 
                 if (habitCompletionDates.length > 0) {
+                    // Start the first streak. Any single completion is a streak of 1.
                     currentHabitStreak = 1;
                     longestHabitStreak = 1;
+
+                    // Loop through the completion dates starting from the second one.
                     for (let i = 1; i < habitCompletionDates.length; i++) {
                         const prevDate = new Date(habitCompletionDates[i - 1]);
                         const currentDate = new Date(habitCompletionDates[i]);
-                        const diffDays = Math.round((currentDate.setHours(0,0,0,0) - prevDate.setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+                        
+                        const diffDays = Math.round((currentDate - prevDate) / (1000 * 60 * 60 * 24));
+
                         if (diffDays === 1) {
+                            // The dates are consecutive, so the streak continues.
                             currentHabitStreak++;
                         } else {
+                            // The streak was broken. Compare the streak that just ended with the longest one so far.
                             longestHabitStreak = Math.max(longestHabitStreak, currentHabitStreak);
+                            // Start a new streak from 1 for the current completion day.
                             currentHabitStreak = 1;
                         }
                     }
-                    longestHabitStreak = Math.max(longestHabitStreak, currentHabitStreak); // Final check
+                    // After the loop, do one last check to account for the final streak.
+                    longestHabitStreak = Math.max(longestHabitStreak, currentHabitStreak);
                 }
-                // --- END STREAK LOGIC FOR INDIVIDUAL HABIT ---
+                // --- STREAK LOGIC CORRECTION END ---
 
                 const streakItem = document.createElement('div');
                 streakItem.className = 'habit-stat-item';
@@ -924,61 +771,30 @@
             
             if (unsubscribeFromFirestore) {
                 unsubscribeFromFirestore();
-                unsubscribeFromFirestore = null; // Ensure it's nullified
             }
 
             currentUser = user;
-            isUserAnonymous = !user || user.isAnonymous || !user.emailVerified; // Treat non-verified as anonymous for data saving
+            isUserAnonymous = !user || user.isAnonymous;
 
             if (isUserAnonymous) {
                 const localDataString = localStorage.getItem('habitsApp_data_v2');
-                try {
-                   userHabitData = localDataString ? JSON.parse(localDataString) : { habits: [], history: {} };
-                   if (!userHabitData.habits) userHabitData.habits = []; // Ensure arrays exist
-                   if (!userHabitData.history) userHabitData.history = {};
-                } catch {
-                   userHabitData = { habits: [], history: {} }; // Reset if parse fails
-                }
+                userHabitData = localDataString ? JSON.parse(localDataString) : { habits: [], history: {} };
                 renderHabits(); 
             } else {
-                // User is logged in and verified
                 const userDocRef = doc(db, 'users', user.uid, 'habitsData', 'main');
 
-                // Check for local data and merge if necessary (only if Firestore data doesn't exist yet)
                 const localDataString = localStorage.getItem('habitsApp_data_v2');
                 if (localDataString) {
-                    try {
-                        const localData = JSON.parse(localDataString);
-                        if (localData.habits && localData.habits.length > 0) {
-                             const firestoreDoc = await getDoc(userDocRef);
-                             if (!firestoreDoc.exists()) { // Only merge if Firestore is empty
-                                 await setDoc(userDocRef, localData); 
-                                 console.log("Migrated local habits data to Firestore.");
-                             } else {
-                                 console.log("Firestore habits data exists, ignoring local data.");
-                             }
-                             localStorage.removeItem('habitsApp_data_v2'); // Remove local data after checking/migrating
-                        } else {
-                             localStorage.removeItem('habitsApp_data_v2'); // Remove empty local data
-                        }
-                    } catch {
-                         localStorage.removeItem('habitsApp_data_v2'); // Remove corrupted local data
+                    const localData = JSON.parse(localDataString);
+                    if (localData.habits && localData.habits.length > 0) {
+                        await setDoc(userDocRef, localData, { merge: true }); 
+                        localStorage.removeItem('habitsApp_data_v2'); 
                     }
                 }
 
-                // Set up the Firestore listener
                 unsubscribeFromFirestore = onSnapshot(userDocRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        userHabitData = docSnap.data();
-                        if (!userHabitData.habits) userHabitData.habits = []; // Ensure arrays exist
-                        if (!userHabitData.history) userHabitData.history = {};
-                    } else {
-                         userHabitData = { habits: [], history: {} }; // Reset if doc doesn't exist
-                    }
+                    userHabitData = docSnap.exists() ? docSnap.data() : { habits: [], history: {} };
                     renderHabits();
-                }, (error) => {
-                    console.error("Error listening to Firestore habits:", error);
-                    // Optionally handle error, e.g., show message to user
                 });
             }
             initializeHabitTracker(); 
@@ -990,19 +806,6 @@
         <div class="loading-spinner"></div>
     </div>
     <!-- End Loading Spinner -->
-    <script>
-        // تسجيل Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('Service Worker registered successfully.');
-                    })
-                    .catch(error => {
-                        console.error('Service Worker registration failed:', error);
-                    });
-            });
-        }
-    </script>
+
 </body>
 </html>

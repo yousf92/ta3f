@@ -211,42 +211,6 @@
             color: #28a745; /* أخضر بوتستراب */
             border: 1px solid #28a745;
         }
-
-        /* START: Loading Spinner Styles */
-         .loading-spinner-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            display: none; /* Hidden by default */
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-        }
-        .loading-spinner-overlay.show {
-            display: flex;
-            opacity: 1;
-        }
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 7px solid rgba(255, 255, 255, 0.2);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        /* END: Loading Spinner Styles */
     </style>
 </head>
 <body>
@@ -259,7 +223,7 @@
     <div class="form-container text-center">
         <h2><i class="fas fa-user-plus me-2"></i> انضم إلينا!</h2>
         <p class="text-muted mb-4">أنشئ حسابك وابدأ الدردشة فورا</p>
-
+        
         <div class="mb-3 text-end">
             <label for="signup-name" class="form-label">الاسم الكامل</label>
             <input type="text" id="signup-name" class="form-control" required placeholder="أدخل اسمك الكامل">
@@ -272,33 +236,17 @@
             <label for="signup-password" class="form-label">كلمة المرور</label>
             <input type="password" id="signup-password" class="form-control" required placeholder="********">
         </div>
-
+        
         <button id="signup-button" class="btn btn-primary w-100 mt-3">
             <i class="fas fa-user-plus"></i> إنشاء حساب
         </button>
-
+        
         <div id="auth-message" class="alert mt-3 d-none"></div>
 
         <p class="mt-4 text-muted">لديك حساب بالفعل؟ <a href="index.html"><i class="fas fa-sign-in-alt me-1"></i> تسجيل الدخول</a></p>
     </div>
 
     <script type="module">
-        // --- START: Added Spinner Functions ---
-        function showSpinner() {
-            const spinner = document.getElementById('loading-spinner-overlay');
-            if (spinner) {
-                spinner.classList.add('show');
-            }
-        }
-
-        function hideSpinner() {
-            const spinner = document.getElementById('loading-spinner-overlay');
-            if (spinner) {
-                spinner.classList.remove('show');
-            }
-        }
-        // --- END: Added Spinner Functions ---
-
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, updateProfile, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -342,7 +290,7 @@
             if (cooldownTimer) clearInterval(cooldownTimer);
 
             signupButton.disabled = true;
-
+            
             const resendLink = authMessage.querySelector("a[onclick='resendVerificationEmail()']");
             if (resendLink) resendLink.style.pointerEvents = "none"; // Disable link clicks
 
@@ -376,7 +324,7 @@
                 showAuthMessage("لإعادة إرسال البريد الإلكتروني، يرجى ملء حقلي البريد الإلكتروني وكلمة المرور.");
                 return;
             }
-             showSpinner(); // Show spinner
+
             try {
                 // Sign in the user first to get the user object
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -399,11 +347,9 @@
                 } else {
                      showAuthMessage("حدث خطأ: " + error.message);
                 }
-            } finally {
-                 hideSpinner(); // Hide spinner
             }
         }
-
+        
         // Make the function available globally so the link can call it
         window.resendVerificationEmail = resendVerificationEmail;
 
@@ -417,10 +363,9 @@
             if (password.length < 6) {
                 return showAuthMessage("يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.");
             }
-
+            
             signupButton.disabled = true;
             signupButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري إنشاء الحساب...';
-             showSpinner(); // Show spinner
 
             createUserWithEmailAndPassword(auth, email, password)
                 .then(userCredential => {
@@ -441,7 +386,6 @@
                     showAuthMessage("تم إنشاء حسابك بنجاح! لتفعيله، يرجى التحقق من بريدك الإلكتروني. <br><b>ملاحظة هامة:</b> ستجد رسالة التفعيل في مجلد البريد المزعج (Spam)، وليس في البريد الوارد. بعد الضغط على رابط التفعيل، يمكنك تسجيل الدخول.", false);
                     signupButton.disabled = false;
                     signupButton.innerHTML = originalSignupButtonText;
-                     hideSpinner(); // Hide spinner on success
                 })
                 .catch(error => {
                     console.error("Signup failed:", error); // Log error for debugging
@@ -457,29 +401,15 @@
                     }
                     signupButton.disabled = false;
                     signupButton.innerHTML = originalSignupButtonText;
-                     hideSpinner(); // Hide spinner on error
                 });
         });
     </script>
-
+    
     <!-- Loading Spinner -->
     <div id="loading-spinner-overlay" class="loading-spinner-overlay">
         <div class="loading-spinner"></div>
     </div>
     <!-- End Loading Spinner -->
-<script>
-    // تسجيل Service Worker
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('Service Worker registered successfully.');
-                })
-                .catch(error => {
-                    console.error('Service Worker registration failed:', error);
-                });
-        });
-    }
-</script>
+
 </body>
 </html>

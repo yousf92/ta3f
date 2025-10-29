@@ -268,7 +268,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, deleteDoc, doc, serverTimestamp, Timestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, deleteDoc, doc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAGgZmhJ_mMezlf7xElisvzJ8l9D758d4g",
@@ -282,16 +282,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        // تفعيل Offline Persistence
-        enableIndexedDbPersistence(db)
-          .catch((err) => {
-            if (err.code == 'failed-precondition') {
-              console.warn("Offline persistence failed: Multiple tabs open.");
-            } else if (err.code == 'unimplemented') {
-              console.warn("Offline persistence failed: Browser does not support it.");
-            }
-          });
 
         // --- START: Background Theme Logic ---
         function applyBackgroundPreference() {
@@ -652,19 +642,6 @@
         <div class="loading-spinner"></div>
     </div>
     <!-- End Loading Spinner -->
-    <script>
-        // تسجيل Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('Service Worker registered successfully.');
-                    })
-                    .catch(error => {
-                        console.error('Service Worker registration failed:', error);
-                    });
-            });
-        }
-    </script>
+
 </body>
 </html>

@@ -16,7 +16,7 @@ function hideSpinner() {
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, enableIndexedDbPersistence, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, getDocs, deleteDoc, setDoc, updateDoc, arrayUnion, arrayRemove, where, limit, increment, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, getDocs, deleteDoc, setDoc, updateDoc, arrayUnion, arrayRemove, where, limit, increment, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAGgZmhJ_mMezlf7xElisvzJ8l9D758d4g",
@@ -30,16 +30,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-// تفعيل Offline Persistence
-enableIndexedDbPersistence(db)
-  .catch((err) => {
-    if (err.code == 'failed-precondition') {
-      console.warn("Offline persistence failed: Multiple tabs open.");
-    } else if (err.code == 'unimplemented') {
-      console.warn("Offline persistence failed: Browser does not support it.");
-    }
-  });
 
 // --- View References ---
 const mainView = document.getElementById('main-view');
@@ -127,7 +117,7 @@ groupsTab.innerHTML = `
                 <i class="bi bi-plus-circle-fill me-2"></i> إنشاء مجموعة جديدة
             </button>
         </div>
-
+        
         <!-- My Groups Section -->
         <div id="my-groups-list-container" class="flex-grow-1" style="overflow-y: auto; display: flex; flex-direction: column; min-height: 40%;">
             <h6 class="text-white p-2 flex-shrink: 0;">مجموعاتي</h6>
@@ -135,7 +125,7 @@ groupsTab.innerHTML = `
                 <!-- My groups will be populated here -->
             </div>
         </div>
-
+        
         <!-- Divider -->
         <hr class="my-1" style="border-color: var(--border-color);">
 
@@ -217,7 +207,7 @@ const passcodeInput = document.getElementById('passcode-input');
 let currentUserRole = 'user';
 let currentDisplayName = 'زائر';
 let replyToMessage = null;
-let privateReplyToMessage = null;
+let privateReplyToMessage = null; 
 let groupReplyToMessage = null;
 let editingMessageInfo = null;
 const userProfiles = {};
@@ -233,8 +223,8 @@ let currentGroupData = null; // To store current group info
 
 let unsubscribePrivateChat = null;
 let unsubscribeConversations = null;
-let unsubscribeUserProfiles = null;
-let unsubscribeUserDoc = null;
+let unsubscribeUserProfiles = null; 
+let unsubscribeUserDoc = null; 
 let unsubscribeRecipientDoc = null;
 let unsubscribeMyGroups = null;
 let unsubscribeGroupDoc = null;
@@ -305,7 +295,7 @@ function initializeAudioPlayer(uniqueId) {
     const playBtn = playerEl.querySelector('.play-pause-btn');
     const progressBar = playerEl.querySelector('.progress-bar');
     const progressBarContainer = playerEl.querySelector('.progress-bar-container');
-
+    
     const audio = new Audio(audioSrc);
     activeAudioPlayers[uniqueId] = { audio, playBtn };
 
@@ -378,7 +368,7 @@ async function uploadAudioToCloudinary(audioBlob) {
     const formData = new FormData();
     formData.append('file', audioBlob, 'voice-message.webm');
     formData.append('upload_preset', 'my-voice-messages');
-
+    
     showSpinner();
     try {
         const response = await fetch('https://api.cloudinary.com/v1_1/dkccdradf/video/upload', {
@@ -439,13 +429,13 @@ function createVoiceMessagePlaceholder(placeholderId) {
 
 async function startRecording(context) {
     if (mediaRecorder && mediaRecorder.state === 'recording') return;
-
+    
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         activeRecordingContext = context;
         audioChunks = [];
         shouldDiscardRecording = false;
-
+        
         mediaRecorder = new MediaRecorder(stream);
 
         mediaRecorder.ondataavailable = event => {
@@ -456,13 +446,13 @@ async function startRecording(context) {
             if (isSending) {
                 return;
             }
-
+            
             stream.getTracks().forEach(track => track.stop());
-
+            
             if (shouldDiscardRecording) {
                 return;
             }
-
+            
             isSending = true;
 
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -571,7 +561,7 @@ function resetAllRecordingUIs(context) {
 
 function handleMicButtonPress(e, context) {
     e.preventDefault();
-    isLongPress = false;
+    isLongPress = false; 
     pressTimer = setTimeout(() => {
         isLongPress = true;
         startRecording(context);
@@ -623,12 +613,12 @@ function showMainView() {
     mainView.classList.add('active');
     privateChatView.classList.remove('active');
     groupChatView.classList.remove('active');
-
+    
     recipientId = null;
     privateChatRoomId = null;
     currentGroupId = null;
     currentGroupData = null;
-
+    
     groupChatHeaderClickable.onclick = null; // Clear click listener
 
     if (unsubscribePrivateChat) { unsubscribePrivateChat(); unsubscribePrivateChat = null; }
@@ -649,7 +639,7 @@ async function showPrivateChatView(targetUserId, targetUserName, targetUserAvata
 
         const chatRoomRefForUnread = doc(db, "private_chats", privateChatRoomId);
         await updateDoc(chatRoomRefForUnread, { [`unread_count_${currentUserId}`]: 0 }).catch(console.error);
-
+        
         if (unsubscribeUserDoc) unsubscribeUserDoc();
         if (unsubscribeRecipientDoc) unsubscribeRecipientDoc();
 
@@ -660,7 +650,7 @@ async function showPrivateChatView(targetUserId, targetUserName, targetUserAvata
             if (!userDocSnap.exists()) return;
             const currentUserData = userDocSnap.data();
             const recipientData = recipientDocSnap.exists() ? recipientDocSnap.data() : {};
-
+            
             const iAmBlocked = recipientData.blockedUsers?.includes(currentUserId);
             const iHaveBlocked = currentUserData.blockedUsers?.includes(recipientId);
 
@@ -688,10 +678,10 @@ async function showPrivateChatView(targetUserId, targetUserName, targetUserAvata
                 blockUnblockBtn.onclick = () => toggleBlockUser(true);
             }
         };
-
+        
         unsubscribeUserDoc = onSnapshot(doc(db, "users", currentUserId), updateBlockStatusUI);
         unsubscribeRecipientDoc = onSnapshot(doc(db, "users", recipientId), updateBlockStatusUI);
-
+        
         const chatRoomRef = doc(db, "private_chats", privateChatRoomId);
         const chatRoomSnap = await getDoc(chatRoomRef);
         if (!chatRoomSnap.exists()) {
@@ -725,7 +715,7 @@ async function showGroupChatView(groupId, groupName) {
             showCustomConfirm("المجموعة غير موجودة.", "bi bi-exclamation-circle-fill", () => {});
             return;
         }
-
+        
         currentGroupData = groupDocSnap.data();
         let isMember = currentGroupData.members && currentGroupData.members[currentUserId];
 
@@ -736,7 +726,7 @@ async function showGroupChatView(groupId, groupName) {
             currentGroupData = updatedGroupSnap.data();
             isMember = true;
         }
-
+        
         const groupChatFooter = document.getElementById('group-chat-footer').querySelector('.card-footer');
 
         if (isMember) {
@@ -766,14 +756,14 @@ async function showGroupChatView(groupId, groupName) {
             const groupMessageInputNew = document.getElementById('group-message-input');
             groupMessageInputNew.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendGroupMessage(); } });
             groupMessageInputNew.addEventListener('input', () => { groupMessageInputNew.style.height = 'auto'; groupMessageInputNew.style.height = (groupMessageInputNew.scrollHeight) + 'px'; });
-
+            
             // Re-setup listeners for the new mic button
             setupMicButtonListeners('group');
 
             currentGroupId = groupId;
             groupChatNameEl.textContent = groupName;
             groupAvatarHeader.src = currentGroupData.groupPhotoURL || `https://placehold.co/100x100/00a884/FFFFFF?text=${groupName.charAt(0)}`;
-
+            
             const currentUserRoleInGroup = currentGroupData.members[currentUserId];
             if (currentGroupData.ownerId === currentUserId) {
                 uploadGroupPhotoContainer.style.display = 'flex';
@@ -798,7 +788,7 @@ async function showGroupChatView(groupId, groupName) {
             currentGroupId = groupId;
             groupChatNameEl.textContent = groupName;
             groupAvatarHeader.src = currentGroupData.groupPhotoURL || `https://placehold.co/100x100/00a884/FFFFFF?text=${groupName.charAt(0)}`;
-
+            
             groupMessagesBox.innerHTML = `
                 <div class="text-center p-5 text-muted d-flex flex-column justify-content-center align-items-center h-100">
                     <i class="bi bi-people-fill" style="font-size: 4rem;"></i>
@@ -814,7 +804,7 @@ async function showGroupChatView(groupId, groupName) {
                     </button>
                 </div>
             `;
-
+            
             document.getElementById('request-to-join-from-view-btn').addEventListener('click', (e) => {
                 window.requestToJoinGroup(groupId, e.currentTarget);
             });
@@ -827,7 +817,7 @@ async function showGroupChatView(groupId, groupName) {
             if (unsubscribeGroupDoc) { unsubscribeGroupDoc(); unsubscribeGroupDoc = null; }
             if (unsubscribeJoinRequests) { unsubscribeJoinRequests(); unsubscribeJoinRequests = null; }
         }
-
+        
         mainView.classList.remove('active');
         privateChatView.classList.remove('active');
         groupChatView.classList.add('active');
@@ -853,10 +843,10 @@ onAuthStateChanged(auth, async user => {
             // User is signed in.
             localStorage.setItem('lastReadTimestamp', Date.now().toString());
             currentUserId = user.uid;
-
+            
             const userDocRef = doc(db, "users", user.uid);
             const userDocSnap = await getDoc(userDocRef);
-
+            
             // If user doc doesn't exist and they are not anonymous, they are a new user who shouldn't be here.
             if (!userDocSnap.exists() && !user.isAnonymous) {
                 window.location.href = 'index.html';
@@ -864,7 +854,7 @@ onAuthStateChanged(auth, async user => {
             }
 
             const userData = userDocSnap.exists() ? userDocSnap.data() : {};
-
+            
             // Set global user state
             currentDisplayName = userData.displayName || `زائر-${user.uid.substring(0, 5)}`;
             currentUserRole = userData.role || 'user';
@@ -873,14 +863,14 @@ onAuthStateChanged(auth, async user => {
             if (isVisitor && !userData.displayName) {
                 await setDoc(userDocRef, { displayName: currentDisplayName, isVisitor: true, role: 'user' }, { merge: true });
             }
-
+            
             userProfiles[user.uid] = { ...userData, displayName: currentDisplayName, role: currentUserRole, isVisitor };
-
-            listenForUserProfiles();
+            
+            listenForUserProfiles(); 
             loadMessages();
             loadPinnedMessage();
             listenForMyGroups();
-
+            
             initializeSwipeToReply('messages-box', '.message', setReplyFromElement);
             initializeSwipeToReply('private-messages-box', '.private-message-wrapper', setPrivateReplyFromElement);
             initializeSwipeToReply('group-messages-box', '.message', setGroupReplyFromElement);
@@ -901,7 +891,7 @@ function initializeSwipeToReply(containerId, messageSelector, replyFunction) {
     const swipeIcon = containerId === 'messages-box'
         ? document.getElementById('swipe-reply-icon')
         : container.parentElement.querySelector('.swipe-reply-icon-class');
-
+    
     if (!swipeIcon) {
         console.warn(`Swipe icon not found for container ${containerId}`);
         return;
@@ -921,7 +911,7 @@ function initializeSwipeToReply(containerId, messageSelector, replyFunction) {
         if (!swipedElement || isScrolling) return;
         currentX = e.touches[0].clientX; const currentY = e.touches[0].clientY; const deltaX = currentX - startX; const deltaY = currentY - startY;
         if (!isSwipeGesture) {
-            if (Math.abs(deltaY) > DIRECTION_LOCK_THRESHOLD && Math.abs(deltaY) > Math.abs(deltaX)) { isScrolling = true; swipedElement = null; return; }
+            if (Math.abs(deltaY) > DIRECTION_LOCK_THRESHOLD && Math.abs(deltaY) > Math.abs(deltaX)) { isScrolling = true; swipedElement = null; return; } 
             else if (Math.abs(deltaX) > DIRECTION_LOCK_THRESHOLD) { isSwipeGesture = true; swipeIcon.style.top = `${swipedElement.offsetTop + (swipedElement.offsetHeight / 2) - 20}px`; swipeIcon.style.left = '20px'; swipeIcon.style.display = 'flex'; swipeIcon.style.opacity = '0'; }
         }
         if (isSwipeGesture) {
@@ -942,7 +932,7 @@ function initializeSwipeToReply(containerId, messageSelector, replyFunction) {
 // --- START: Group System Logic ---
 createGroupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
+    
     if (isVisitor) {
         showCustomConfirm("يجب عليك تسجيل الدخول لإنشاء مجموعة جديدة.", "bi bi-box-arrow-in-right", () => {
             window.location.href = 'index.html';
@@ -953,9 +943,9 @@ createGroupForm.addEventListener('submit', async (e) => {
 
     const groupName = document.getElementById('group-name-input').value.trim();
     const description = document.getElementById('group-description-input').value.trim();
-
+    
     if (!groupName || !currentUserId) return;
-
+    
     showSpinner();
     try {
         await addDoc(collection(db, "groups"), {
@@ -980,12 +970,12 @@ createGroupForm.addEventListener('submit', async (e) => {
 
 function listenForMyGroups() {
     if (unsubscribeMyGroups) unsubscribeMyGroups();
-
+    
     const myGroupsList = document.getElementById('my-groups-list');
     const discoverGroupsList = document.getElementById('discover-groups-list');
 
     const q = query(collection(db, "groups"), orderBy("createdAt", "desc"));
-
+    
     unsubscribeMyGroups = onSnapshot(q, (snapshot) => {
         const myGroups = [];
         const otherGroups = [];
@@ -1015,7 +1005,7 @@ function listenForMyGroups() {
                 const groupEl = document.createElement('div');
                 groupEl.className = 'group-list-item';
                 const groupPhoto = group.groupPhotoURL || `https://placehold.co/100x100/00a884/FFFFFF?text=${group.groupName.charAt(0)}`;
-
+                
                 groupEl.innerHTML = `
                     <img src="${groupPhoto}" alt="Group Icon">
                     <div class="group-info">
@@ -1045,7 +1035,7 @@ function listenForMyGroups() {
                 const groupEl = document.createElement('div');
                 groupEl.className = 'group-list-item';
                 const groupPhoto = group.groupPhotoURL || `https://placehold.co/100x100/00a884/FFFFFF?text=${group.groupName.charAt(0)}`;
-
+                
                 groupEl.innerHTML = `
                     <img src="${groupPhoto}" alt="Group Icon">
                     <div class="group-info">
@@ -1111,7 +1101,7 @@ async function showGroupMembers(groupId) {
             editDescBtn.innerHTML = '<i class="bi bi-pencil-fill me-2"></i> تعديل الوصف';
             editDescBtn.onclick = () => {
                 document.getElementById('group-description-textarea').value = groupData.description || '';
-                groupMembersModal.hide();
+                groupMembersModal.hide(); 
                 editGroupDescriptionModal.show();
             };
             membersModalFooter.appendChild(editDescBtn);
@@ -1122,16 +1112,16 @@ async function showGroupMembers(groupId) {
         for (const memberId of memberIds) {
             const userProfile = userProfiles[memberId];
             if (!userProfile) continue;
-
+            
             if (userProfile.role === 'developer') {
-                continue;
+                continue; 
             }
 
             const memberRole = groupData.members[memberId];
             const escapedMemberName = userProfile.displayName.replace(/'/g, "\\'");
-
+            
             let actionsHtml = '<div class="member-actions">';
-
+            
             if (currentUserRoleInGroup === 'owner' && memberId !== currentUserId) {
                 if (memberRole === 'member') {
                     actionsHtml += `<button class="btn btn-sm btn-outline-success role-toggle-btn" onclick="window.toggleGroupAdminRole('${groupId}', '${memberId}', 'admin')">ترقية لمشرف</button>`;
@@ -1142,13 +1132,13 @@ async function showGroupMembers(groupId) {
             if ((currentUserRoleInGroup === 'owner' || currentUserRoleInGroup === 'admin') && memberRole === 'member' && memberId !== currentUserId) {
                 actionsHtml += `<button class="btn btn-sm btn-outline-danger kick-member-btn" onclick="window.kickGroupMember('${groupId}', '${memberId}', '${escapedMemberName}')">طرد</button>`;
             }
-
+            
             const isTargetOwner = memberRole === 'owner';
             const isTargetDeveloper = userProfile.role === 'developer';
             if (currentUserRole === 'developer' && !isTargetOwner && !isTargetDeveloper && memberId !== currentUserId) {
                 actionsHtml += `<button class="btn btn-sm text-danger kick-member-btn" onclick="window.kickGroupMember('${groupId}', '${memberId}', '${escapedMemberName}')" title="طرد بواسطة مطور"><i class="bi bi-x-circle-fill fs-5"></i></button>`;
             }
-
+            
             actionsHtml += '</div>';
 
             let roleBadge = '';
@@ -1246,7 +1236,7 @@ window.requestToJoinGroup = async (groupId, btn) => {
     btn.disabled = true;
     btn.textContent = 'جاري الإرسال...';
     showSpinner();
-
+    
     try {
         const requestRef = collection(db, 'joinRequests');
         const q = query(requestRef, where('groupId', '==', groupId), where('userId', '==', currentUserId));
@@ -1256,7 +1246,7 @@ window.requestToJoinGroup = async (groupId, btn) => {
             btn.textContent = 'الطلب مرسل';
             return;
         }
-
+        
         await addDoc(requestRef, {
             groupId: groupId,
             userId: currentUserId,
@@ -1273,7 +1263,7 @@ window.requestToJoinGroup = async (groupId, btn) => {
 function loadJoinRequests(groupId) {
     if (unsubscribeJoinRequests) unsubscribeJoinRequests();
     const q = query(collection(db, 'joinRequests'), where('groupId', '==', groupId), where('status', '==', 'pending'));
-
+    
     unsubscribeJoinRequests = onSnapshot(q, (snapshot) => {
         if(snapshot.empty) {
             joinRequestsContainer.innerHTML = '<p class="text-muted text-center small m-0">لا توجد طلبات انضمام حالية</p>';
@@ -1317,7 +1307,7 @@ window.manageJoinRequest = async (requestId, requesterId, groupId, approve) => {
 async function sendGroupMessage() {
     const text = document.getElementById('group-message-input').value.trim();
     if (!text || !currentUserId || !currentGroupId) return;
-
+    
     const messagesRef = collection(db, "groups", currentGroupId, "messages");
     const messageData = { text, senderId: currentUserId, createdAt: serverTimestamp() };
     if(groupReplyToMessage) messageData.replyTo = groupReplyToMessage;
@@ -1336,12 +1326,12 @@ async function sendGroupMessage() {
 async function sendGroupVoiceMessage(url, duration) {
      if (!url || !currentUserId || !currentGroupId) return null;
     const messagesRef = collection(db, "groups", currentGroupId, "messages");
-    const messageData = {
+    const messageData = { 
         type: 'voice',
         text: url,
         duration: duration,
-        senderId: currentUserId,
-        createdAt: serverTimestamp()
+        senderId: currentUserId, 
+        createdAt: serverTimestamp() 
     };
     if(groupReplyToMessage) messageData.replyTo = groupReplyToMessage;
 
@@ -1360,25 +1350,25 @@ function loadGroupMessages(groupId) {
      if (unsubscribeGroupMessages) unsubscribeGroupMessages();
      const messagesRef = collection(db, "groups", groupId, "messages");
      const q = query(messagesRef, orderBy("createdAt"));
-
+     
      unsubscribeGroupMessages = onSnapshot(q, (snapshot) => {
          groupMessagesBox.innerHTML = '';
          snapshot.forEach(docSnap => {
              const msg = docSnap.data();
              const msgId = docSnap.id;
              const isOwn = msg.senderId === currentUserId;
-
+             
              const senderProfile = userProfiles[msg.senderId] || {};
              const displayName = senderProfile.displayName || 'مستخدم غير معروف';
              const photoURL = senderProfile.photoURL || 'https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png';
              const currentUserRoleInGroup = currentGroupData?.members[currentUserId];
-
+             
              let roleBadge = '';
              const senderRoleInGroup = currentGroupData?.members[msg.senderId];
              if (senderRoleInGroup === 'owner') roleBadge = '<span class="badge bg-primary role-badge">المالك</span>';
              else if (senderRoleInGroup === 'admin') roleBadge = '<span class="badge bg-success role-badge">مشرف</span>';
              const senderNameDisplay = `${displayName} ${roleBadge}`;
-
+             
              const msgWrapper = document.createElement('div');
              msgWrapper.className = `message ${isOwn ? 'own' : 'other'}`;
              msgWrapper.id = `group-message-${msgId}`;
@@ -1387,7 +1377,7 @@ function loadGroupMessages(groupId) {
              msgWrapper.dataset.text = msg.type === 'voice' ? '[رسالة صوتية]' : msg.text;
 
              const time = msg.createdAt ? new Date(msg.createdAt.toDate()).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
-
+             
              let repliedToHtml = '';
              if (msg.replyTo) {
                 const senderHtml = `<div class="replied-to-sender">${msg.replyTo.senderName}</div>`;
@@ -1427,7 +1417,7 @@ function loadGroupMessages(groupId) {
                     actionsHtml += `<a onclick="window.deleteOtherGroupMessage('${msgId}')" title="حذف (إدارة)"><i class="bi bi-shield-x"></i></a>`;
                 }
              }
-
+             
              const actions = `<div class="message-actions">${actionsHtml}</div>`;
 
              const editedBadge = msg.isEdited ? `<span class="edited-badge">(تم التعديل)</span>` : '';
@@ -1517,14 +1507,14 @@ window.toggleGroupReaction = async (msgId, emoji) => {
 };
 
 const cloudinaryWidget = cloudinary.createUploadWidget({
-    cloudName: 'dzx6pjhks',
+    cloudName: 'dzx6pjhks', 
     uploadPreset: 'group_photo',
     sources: ['local', 'url', 'camera'],
     multiple: false,
     cropping: true,
     croppingAspectRatio: 1,
     showSkipCropButton: false
-}, (error, result) => {
+}, (error, result) => { 
     if (!error && result && result.event === "success") {
         showSpinner();
         try {
@@ -1674,7 +1664,7 @@ document.getElementById('cancel-private-reply').addEventListener('click', cancel
 async function sendPrivateMessage() {
     const text = privateMessageInput.value.trim();
     if (!text || !currentUserId || !privateChatRoomId || !recipientId) return;
-
+    
     showSpinner();
     try {
         const messagesRef = collection(db, "private_chats", privateChatRoomId, "messages");
@@ -1685,13 +1675,13 @@ async function sendPrivateMessage() {
             createdAt: serverTimestamp(),
             status: 'sent'
         };
-
+        
         if (privateReplyToMessage) {
             messageData.replyTo = privateReplyToMessage;
         }
 
         const docRef = await addDoc(messagesRef, messageData);
-
+        
         const chatRoomRef = doc(db, "private_chats", privateChatRoomId);
         await updateDoc(chatRoomRef, {
             lastMessage: text,
@@ -1713,7 +1703,7 @@ async function sendPrivateMessage() {
 
 async function sendPrivateVoiceMessage(url, duration) {
     if (!url || !currentUserId || !privateChatRoomId || !recipientId) return null;
-
+    
     showSpinner();
     let docRef = null;
     try {
@@ -1727,13 +1717,13 @@ async function sendPrivateVoiceMessage(url, duration) {
             createdAt: serverTimestamp(),
             status: 'sent'
         };
-
+        
         if (privateReplyToMessage) {
             messageData.replyTo = privateReplyToMessage;
         }
 
         docRef = await addDoc(messagesRef, messageData);
-
+        
         const chatRoomRef = doc(db, "private_chats", privateChatRoomId);
         await updateDoc(chatRoomRef, {
             lastMessage: '🎤 رسالة صوتية',
@@ -1762,7 +1752,7 @@ function loadPrivateMessages() {
         snapshot.forEach(docSnap => {
             const msg = docSnap.data();
             const msgId = docSnap.id;
-
+            
             if (msg.senderId === recipientId && msg.status !== 'seen') {
                 const msgRef = doc(db, "private_chats", privateChatRoomId, "messages", msgId);
                 updateDoc(msgRef, { status: 'seen' });
@@ -1772,7 +1762,7 @@ function loadPrivateMessages() {
             const msgWrapper = document.createElement('div');
             msgWrapper.className = `private-message-wrapper ${isOwn ? 'own' : 'other'}`;
             const time = msg.createdAt ? new Date(msg.createdAt.toDate()).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
-
+            
             const senderProfile = userProfiles[msg.senderId] || {};
             const senderName = senderProfile.displayName || '...';
             msgWrapper.id = `private-message-${msgId}`;
@@ -1822,14 +1812,14 @@ function loadPrivateMessages() {
                     </div>
                 `;
             }
-
+            
             let receiptIcon = '';
             if (isOwn) {
-                receiptIcon = msg.status === 'seen'
-                    ? `<i class="bi bi-check2-all read-receipt seen"></i>`
+                receiptIcon = msg.status === 'seen' 
+                    ? `<i class="bi bi-check2-all read-receipt seen"></i>` 
                     : `<i class="bi bi-check2 read-receipt sent"></i>`;
             }
-
+            
             const editedBadge = msg.isEdited ? `<span class="edited-badge">(تم التعديل)</span>` : '';
 
             let repliedToHtml = '';
@@ -1842,7 +1832,7 @@ function loadPrivateMessages() {
                     repliedToHtml = `<div class="replied-to-box">${senderHtml}${textHtml}</div>`;
                 }
             }
-
+            
             let messageContentBody;
             if (msg.type === 'voice') {
                 const uniqueId = `private-${msgId}`;
@@ -1916,7 +1906,7 @@ async function searchUsers(name) {
             searchResultsEl.id = 'search-results';
             usersListContainerEl.prepend(searchResultsEl);
         }
-
+        
         let searchResultsHtml = '';
         if(querySnapshot.empty){
             searchResultsHtml = '<p class="text-center text-muted p-3">لم يتم العثور على مستخدمين</p>';
@@ -1953,26 +1943,26 @@ function renderPrivateConversations(conversations = []) {
          usersListContainer.innerHTML = '<p class="text-center text-muted p-3">لا توجد محادثات خاصة بعد</p>';
          return;
      }
-
+     
      usersListContainer.innerHTML = '';
      for (const conv of conversations) {
          const chatRoom = conv.data;
          const chatRoomId = conv.id;
-
+         
          if (chatRoom[`hidden_for_${currentUserId}`]) continue;
 
          const otherUserId = chatRoom.participants.find(id => id !== currentUserId);
          if (!otherUserId) continue;
-
+         
          const userData = userProfiles[otherUserId];
          if (userData) {
              const chatDiv = document.createElement('div');
              chatDiv.className = 'conversation-list-item';
-
+             
              const unreadCount = chatRoom[`unread_count_${currentUserId}`] || 0;
              const unreadBadgeHTML = unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : '';
              const notificationDotHTML = unreadCount > 0 ? `<span class="notification-dot"></span>` : '';
-
+             
              chatDiv.innerHTML = `
                  <div class="avatar-container">
                      <img src="${userData.photoURL || 'https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png'}" alt="Avatar">
@@ -2023,11 +2013,11 @@ async function loadPrivateConversations() {
 
     const chatRoomsRef = collection(db, "private_chats");
     const q = query(chatRoomsRef, where("participants", "array-contains", currentUserId));
-
+    
     unsubscribeConversations = onSnapshot(q, async (snapshot) => {
         const conversations = [];
-        let totalUnreadCount = 0;
-
+        let totalUnreadCount = 0; 
+        
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             if (!data[`hidden_for_${currentUserId}`]) {
@@ -2041,7 +2031,7 @@ async function loadPrivateConversations() {
             const timeB = b.data.lastMessageTimestamp?.toDate() || 0;
             return timeB - timeA;
         });
-
+        
         const notificationBadge = document.getElementById('private-chat-notification-badge');
         if (notificationBadge) {
             if (totalUnreadCount > 0) {
@@ -2051,7 +2041,7 @@ async function loadPrivateConversations() {
                 notificationBadge.style.display = 'none';
             }
         }
-
+        
         renderPrivateConversations(conversations);
     });
 }
@@ -2062,8 +2052,8 @@ privateMessageInput.addEventListener('input', () => { privateMessageInput.style.
 
 async function toggleBlockUser(shouldBlock) {
     if (!currentUserId || !recipientId) return;
-
-    const confirmMessage = shouldBlock
+    
+    const confirmMessage = shouldBlock 
         ? `هل أنت متأكد من حظر ${recipientNameEl.textContent}؟`
         : `هل أنت متأكد من إلغاء حظر ${recipientNameEl.textContent}؟`;
 
@@ -2158,7 +2148,7 @@ function updateExistingDomNames() {
             senderNameEl.textContent = `${profile.displayName || 'مستخدم'} ${roleBadge}`;
         }
     });
-
+    
     loadPrivateConversations();
 
     if (privateChatView.classList.contains('active') && recipientId && userProfiles[recipientId]) {
@@ -2175,7 +2165,7 @@ function listenForUserProfiles() {
         snapshot.docChanges().forEach((change) => {
             userProfiles[change.doc.id] = change.doc.data();
         });
-        updateExistingDomNames();
+        updateExistingDomNames(); 
     });
 }
 
@@ -2187,15 +2177,15 @@ async function sendMessage() {
     const text = messageInput.value.trim();
     if (!text || !auth.currentUser) return;
     if (!isVisitor) { const userStatus = await checkUserStatus(auth.currentUser.uid); if (userStatus === 'muted') { showCustomConfirm("أنت مكتوم حاليا ولا يمكنك إرسال رسائل.", "bi bi-mic-mute-fill", () => {}); return; } }
-
+    
     const messageData = { text, senderName: currentDisplayName, senderId: auth.currentUser.uid, senderRole: currentUserRole, createdAt: serverTimestamp() };
     if (replyToMessage) { messageData.replyTo = replyToMessage; }
 
     showSpinner();
     try {
         await addDoc(collection(db, "messages"), messageData);
-        messageInput.value = "";
-        cancelReply();
+        messageInput.value = ""; 
+        cancelReply(); 
         messageInput.style.height = 'auto';
     } catch (error) {
         console.error("Error sending message:", error);
@@ -2207,15 +2197,15 @@ async function sendMessage() {
 async function sendVoiceMessage(url, duration) {
     if (!url || !auth.currentUser) return null;
     if (!isVisitor) { const userStatus = await checkUserStatus(auth.currentUser.uid); if (userStatus === 'muted') { showCustomConfirm("أنت مكتوم حاليا ولا يمكنك إرسال رسائل.", "bi bi-mic-mute-fill", () => {}); return null; } }
-
-    const messageData = {
+    
+    const messageData = { 
         type: 'voice',
         text: url,
         duration: duration,
-        senderName: currentDisplayName,
-        senderId: auth.currentUser.uid,
-        senderRole: currentUserRole,
-        createdAt: serverTimestamp()
+        senderName: currentDisplayName, 
+        senderId: auth.currentUser.uid, 
+        senderRole: currentUserRole, 
+        createdAt: serverTimestamp() 
     };
     if (replyToMessage) { messageData.replyTo = replyToMessage; }
 
@@ -2242,27 +2232,27 @@ function loadMessages() {
     const q = query(collection(db, "messages"), orderBy("createdAt"));
     onSnapshot(q, (snapshot) => {
         const wasScrolledToBottom = messagesBox.scrollHeight - messagesBox.clientHeight <= messagesBox.scrollTop + 150;
-
+        
         messagesBox.innerHTML = "";
         snapshot.forEach(messageDoc => {
             const msg = messageDoc.data(); const msgId = messageDoc.id; const isOwn = msg.senderId === auth.currentUser?.uid;
-            const msgDiv = document.createElement('div');
+            const msgDiv = document.createElement('div'); 
             msgDiv.className = `message ${isOwn ? 'own' : 'other'}`;
             msgDiv.id = `message-${msgId}`;
-            msgDiv.dataset.senderName = msg.senderName;
-            msgDiv.dataset.senderId = msg.senderId;
+            msgDiv.dataset.senderName = msg.senderName; 
+            msgDiv.dataset.senderId = msg.senderId; 
             msgDiv.dataset.text = msg.type === 'voice' ? '[رسالة صوتية]' : msg.text;
-
+            
             const senderProfile = userProfiles[msg.senderId] || {};
             const displayName = senderProfile.displayName || msg.senderName;
             const photoURL = senderProfile.photoURL || 'https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png';
             const escapedDisplayName = displayName.replace(/'/g, "\\'");
             const startPrivateChatIcon = !isOwn ? `<a onclick="window.startPrivateChatFromGroup('${msg.senderId}', '${escapedDisplayName}', '${photoURL}')" title="بدء دردشة خاصة" style="cursor: pointer;"><i class="bi bi-send"></i></a>` : '';
-
+            
             let roleBadge = '';
             if (senderProfile.role === 'developer') roleBadge = '⭐ (مطور)';
             else if (senderProfile.role === 'admin') roleBadge = '🛡️ (مشرف)';
-
+            
             const senderNameDisplay = `${displayName} ${roleBadge}`;
             const avatarHtml = `<img src="${photoURL}" alt="${displayName}" class="avatar">`;
 
@@ -2274,19 +2264,19 @@ function loadMessages() {
             const pinButton = canModerate ? `<a onclick="window.pinMessage('${msgId}')" title="تثبيت"><i class="bi bi-pin-angle-fill"></i></a>` : '';
             const replyButton = `<a onclick="window.setReplyWrapper('${msgId}')" title="رد"><i class="bi bi-reply-fill"></i></a>`;
             const copyButton = msg.type !== 'voice' ? `<a onclick="window.copyMessageText('${msgId}')" title="نسخ"><i class="bi bi-clipboard"></i></a>` : '';
-
+            
             let editBtn = '';
             if (isOwn && msg.type !== 'voice') {
                 editBtn = `<a onclick="window.editPublicMessage('${msgId}', \`${msg.text.replace(/`/g, '\\`')}\`)" title="تعديل"><i class="bi bi-pencil-fill"></i></a>`;
             }
-
+            
             if (isOwn) {
                 controls = `<div class="message-actions">${copyButton}${replyButton}${editBtn}<a onclick="window.deleteOwnMessage('${msgId}')" title="حذف"><i class="bi bi-trash-fill"></i></a>${pinButton}</div>`;
             } else {
                 let actionButtons = `${startPrivateChatIcon}${copyButton}${replyButton}`;
                 if(canModerate){
                     actionButtons += `<a onclick="window.deleteOtherMessage('${msgId}')" title="حذف"><i class="bi bi-trash-fill"></i></a>`;
-                    const isTargetDeveloper = senderProfile.role === 'developer';
+                    const isTargetDeveloper = senderProfile.role === 'developer'; 
                     const isTargetAdmin = senderProfile.role === 'admin';
                     if (currentUserRole === 'developer' && !isTargetDeveloper) { actionButtons += `<a onclick="window.toggleAdminRole('${msg.senderId}', '${escapedDisplayName}')" title="تغيير دور المشرف"><i class="bi bi-shield-fill"></i></a>`; }
                     actionButtons += pinButton;
@@ -2313,7 +2303,7 @@ function loadMessages() {
             }
             const availableReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏']; let reactionsContainerHtml = '<div class="reactions-container">'; availableReactions.forEach(emoji => { reactionsContainerHtml += `<span class="reaction-emoji" onclick="window.toggleReaction('${msgId}', '${emoji}')">${emoji}</span>`; }); reactionsContainerHtml += '</div>';
             let displayedReactionsHtml = '<div class="message-reactions">'; if (msg.reactions && msg.reactions.length > 0) { const reactionGroups = msg.reactions.reduce((acc, r) => { acc[r.emoji] = (acc[r.emoji] || 0) + 1; return acc; }, {}); for (const e in reactionGroups) { displayedReactionsHtml += `<div class="reaction-chip">${e} ${reactionGroups[e]}</div>`; } } displayedReactionsHtml += '</div>';
-
+            
             let messageContentBody;
             if (msg.type === 'voice') {
                 const uniqueId = `public-${msgId}`;
@@ -2327,30 +2317,30 @@ function loadMessages() {
             messageBubble.innerHTML = messageContentHtml + controls;
             msgDiv.innerHTML = avatarHtml; msgDiv.appendChild(messageBubble); messagesBox.appendChild(msgDiv);
         });
-
+        
         if (wasScrolledToBottom) { messagesBox.scrollTop = messagesBox.scrollHeight; }
     });
 }
 window.startPrivateChatFromGroup = (targetUserId, targetUserName, targetUserAvatar) => { showPrivateChatView(targetUserId, targetUserName, targetUserAvatar); };
 const pinnedDocRef = doc(db, "chat_config", "pinned_message");
-window.pinMessage = async (messageId) => {
-    if (isVisitor) return;
+window.pinMessage = async (messageId) => { 
+    if (isVisitor) return; 
     showSpinner();
     try {
-        const messageDoc = await getDoc(doc(db, "messages", messageId));
-        if (!messageDoc.exists()) return;
-        const messageData = messageDoc.data();
-        await setDoc(pinnedDocRef, { messageId: messageId, text: messageData.type === 'voice' ? '[رسالة صوتية]' : messageData.text, senderName: messageData.senderName, pinnedBy: currentDisplayName, pinnedAt: serverTimestamp() });
+        const messageDoc = await getDoc(doc(db, "messages", messageId)); 
+        if (!messageDoc.exists()) return; 
+        const messageData = messageDoc.data(); 
+        await setDoc(pinnedDocRef, { messageId: messageId, text: messageData.type === 'voice' ? '[رسالة صوتية]' : messageData.text, senderName: messageData.senderName, pinnedBy: currentDisplayName, pinnedAt: serverTimestamp() }); 
     } finally {
         hideSpinner();
     }
 };
-unpinButton.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    if(isVisitor) return;
+unpinButton.addEventListener('click', async (e) => { 
+    e.stopPropagation(); 
+    if(isVisitor) return; 
     showSpinner();
     try {
-        await setDoc(pinnedDocRef, { messageId: null, text: null, senderName: null, pinnedBy: null });
+        await setDoc(pinnedDocRef, { messageId: null, text: null, senderName: null, pinnedBy: null }); 
     } finally {
         hideSpinner();
     }
@@ -2359,22 +2349,22 @@ function loadPinnedMessage() { onSnapshot(pinnedDocRef, (doc) => { if (doc.exist
 pinnedMessageClickableArea.addEventListener('click', () => { const messageId = pinnedMessageContainer.dataset.messageId; if (!messageId) return; const messageElement = document.getElementById(`message-${messageId}`); if (messageElement) { messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); messageElement.style.transition = 'background-color 0.5s'; messageElement.style.backgroundColor = 'rgba(255, 255, 0, 0.3)'; setTimeout(() => { messageElement.style.backgroundColor = ''; }, 2000); } });
 window.toggleMuteDropdown = (id) => { event.stopPropagation(); document.querySelectorAll(".mute-dropdown").forEach(d => { if(d.id !== id) d.classList.remove('show-dropdown'); }); document.getElementById(id).classList.toggle("show-dropdown"); }
 window.onclick = (e) => { if (!e.target.matches('.bi-bell-slash-fill')) { document.querySelectorAll(".mute-dropdown.show-dropdown").forEach(d => d.classList.remove('show-dropdown')); } }
-window.muteUser = async (uid, name, min) => {
-    if (!['developer', 'admin'].includes(currentUserRole)) return;
+window.muteUser = async (uid, name, min) => { 
+    if (!['developer', 'admin'].includes(currentUserRole)) return; 
     showSpinner();
     try {
-        await setDoc(doc(db, "users", uid), { mutedUntil: new Date(Date.now() + min * 60000) }, { merge: true });
-        showCustomConfirm(`تم كتم ${name} لمدة ${min} دقيقة.`, "bi bi-mic-mute-fill", () => {});
+        await setDoc(doc(db, "users", uid), { mutedUntil: new Date(Date.now() + min * 60000) }, { merge: true }); 
+        showCustomConfirm(`تم كتم ${name} لمدة ${min} دقيقة.`, "bi bi-mic-mute-fill", () => {}); 
     } finally {
         hideSpinner();
     }
 };
-window.unmuteUser = async (uid, name) => {
-    if (!['developer', 'admin'].includes(currentUserRole)) return;
+window.unmuteUser = async (uid, name) => { 
+    if (!['developer', 'admin'].includes(currentUserRole)) return; 
     showSpinner();
     try {
-        await setDoc(doc(db, "users", uid), { mutedUntil: null }, { merge: true });
-        showCustomConfirm(`تم إلغاء كتم ${name}.`, "bi bi-mic-fill", () => {});
+        await setDoc(doc(db, "users", uid), { mutedUntil: null }, { merge: true }); 
+        showCustomConfirm(`تم إلغاء كتم ${name}.`, "bi bi-mic-fill", () => {}); 
     } finally {
         hideSpinner();
     }
@@ -2429,23 +2419,23 @@ window.scrollToMessage = (messageId, prefix = 'message-') => {
 };
 // END: Scroll to Message Function
 
-window.toggleReaction = async (msgId, emoji) => {
-    if (!auth.currentUser) return;
+window.toggleReaction = async (msgId, emoji) => { 
+    if (!auth.currentUser) return; 
     showSpinner();
     try {
-        const msgRef = doc(db, "messages", msgId);
-        const msgDoc = await getDoc(msgRef);
-        const msgData = msgDoc.data();
-        const uid = auth.currentUser.uid;
-        const existing = msgData.reactions?.find(r => r.userId === uid);
-        if (existing) {
-            await updateDoc(msgRef, { reactions: arrayRemove(existing) });
-            if (existing.emoji !== emoji) {
-                await updateDoc(msgRef, { reactions: arrayUnion({ userId: uid, emoji }) });
-            }
-        } else {
-            await updateDoc(msgRef, { reactions: arrayUnion({ userId: uid, emoji }) });
-        }
+        const msgRef = doc(db, "messages", msgId); 
+        const msgDoc = await getDoc(msgRef); 
+        const msgData = msgDoc.data(); 
+        const uid = auth.currentUser.uid; 
+        const existing = msgData.reactions?.find(r => r.userId === uid); 
+        if (existing) { 
+            await updateDoc(msgRef, { reactions: arrayRemove(existing) }); 
+            if (existing.emoji !== emoji) { 
+                await updateDoc(msgRef, { reactions: arrayUnion({ userId: uid, emoji }) }); 
+            } 
+        } else { 
+            await updateDoc(msgRef, { reactions: arrayUnion({ userId: uid, emoji }) }); 
+        } 
     } finally {
         hideSpinner();
     }
@@ -2458,8 +2448,8 @@ window.deleteOwnMessage = async (id) => { showCustomConfirm("هل أنت متأ�
         hideSpinner();
     }
 }); };
-window.deleteOtherMessage = async (id) => {
-    if (isVisitor || !['developer', 'admin'].includes(currentUserRole)) return;
+window.deleteOtherMessage = async (id) => { 
+    if (isVisitor || !['developer', 'admin'].includes(currentUserRole)) return; 
     showCustomConfirm("هل أنت متأكد من حذف هذه الرسالة؟", "bi bi-trash-fill", async () => {
         showSpinner();
         try {
@@ -2467,67 +2457,67 @@ window.deleteOtherMessage = async (id) => {
         } finally {
             hideSpinner();
         }
-    });
+    }); 
 };
-window.banUser = async (uid, name) => {
-    if (isVisitor || !['developer', 'admin'].includes(currentUserRole)) return;
-    const userToBan = await getDoc(doc(db, "users", uid));
-    if (userToBan.exists() && (userToBan.data().role === 'admin' || userToBan.data().role === 'developer')) {
-        showCustomConfirm("لا يمكنك حظر مشرف آخر.", "bi bi-shield-exclamation", () => {});
-        return;
-    }
-    showCustomConfirm(`هل أنت متأكد من حظر ${name}؟`, "bi bi-slash-circle-fill", async () => {
+window.banUser = async (uid, name) => { 
+    if (isVisitor || !['developer', 'admin'].includes(currentUserRole)) return; 
+    const userToBan = await getDoc(doc(db, "users", uid)); 
+    if (userToBan.exists() && (userToBan.data().role === 'admin' || userToBan.data().role === 'developer')) { 
+        showCustomConfirm("لا يمكنك حظر مشرف آخر.", "bi bi-shield-exclamation", () => {}); 
+        return; 
+    } 
+    showCustomConfirm(`هل أنت متأكد من حظر ${name}؟`, "bi bi-slash-circle-fill", async () => { 
         showSpinner();
         try {
-            await setDoc(doc(db, "users", uid), { isBanned: true }, { merge: true });
-            showCustomConfirm(`تم حظر ${name}.`, "bi bi-check-circle-fill", () => {});
+            await setDoc(doc(db, "users", uid), { isBanned: true }, { merge: true }); 
+            showCustomConfirm(`تم حظر ${name}.`, "bi bi-check-circle-fill", () => {}); 
         } finally {
             hideSpinner();
         }
     })
 };
-window.toggleAdminRole = async (uid, name) => {
-    if (isVisitor || currentUserRole !== 'developer') return;
-    try {
-        const userDocRef = doc(db, "users", uid);
-        const userDoc = await getDoc(userDocRef);
-        const currentRole = userDoc.exists() ? userDoc.data().role || 'user' : 'user';
-        const isCurrentlyAdmin = currentRole === 'admin';
-        const newRole = isCurrentlyAdmin ? 'user' : 'admin';
-        const confirmationMessage = isCurrentlyAdmin ? `هل تريد إزالة ${name} من الإشراف؟` : `هل تريد ترقية ${name} إلى مشرف؟`;
-        showCustomConfirm(confirmationMessage, "bi bi-shield-shaded", async () => {
+window.toggleAdminRole = async (uid, name) => { 
+    if (isVisitor || currentUserRole !== 'developer') return; 
+    try { 
+        const userDocRef = doc(db, "users", uid); 
+        const userDoc = await getDoc(userDocRef); 
+        const currentRole = userDoc.exists() ? userDoc.data().role || 'user' : 'user'; 
+        const isCurrentlyAdmin = currentRole === 'admin'; 
+        const newRole = isCurrentlyAdmin ? 'user' : 'admin'; 
+        const confirmationMessage = isCurrentlyAdmin ? `هل تريد إزالة ${name} من الإشراف؟` : `هل تريد ترقية ${name} إلى مشرف؟`; 
+        showCustomConfirm(confirmationMessage, "bi bi-shield-shaded", async () => { 
             showSpinner();
             try {
-                await setDoc(userDocRef, { role: newRole }, { merge: true });
-                showCustomConfirm(isCurrentlyAdmin ? `تمت إزالة ${name} من الإشراف.` : `تمت ترقية ${name} إلى مشرف.`, "bi bi-person-check-fill", () => {});
+                await setDoc(userDocRef, { role: newRole }, { merge: true }); 
+                showCustomConfirm(isCurrentlyAdmin ? `تمت إزالة ${name} من الإشراف.` : `تمت ترقية ${name} إلى مشرف.`, "bi bi-person-check-fill", () => {}); 
             } finally {
                 hideSpinner();
             }
-        })
-    } catch (error) {
-        console.error("Error toggling admin role: ", error);
-    }
+        }) 
+    } catch (error) { 
+        console.error("Error toggling admin role: ", error); 
+    } 
 };
 // --- END: Public Chat Logic ---
 
 // --- START: App Lock Logic ---
 function initializeAppLock() { const lockData = getLockData(); if (!lockData.enabled) return; const lastUnlock = localStorage.getItem('app_last_unlock') || 0; const timeSinceUnlock = Date.now() - lastUnlock; if (timeSinceUnlock >= RELOCK_TIME) { appLockOverlay.style.display = 'flex'; } }
 function getLockData() { try { return JSON.parse(localStorage.getItem('app_lock_config')) || { enabled: false, passcode: null }; } catch (e) { return { enabled: false, passcode: null }; } }
-function handleUnlock() {
+function handleUnlock() { 
     showSpinner();
     try {
-        const enteredPasscode = passcodeInput.value;
-        const lockData = getLockData();
-        passcodeError.style.display = 'none';
-        if (enteredPasscode === lockData.passcode) {
-            localStorage.setItem('app_last_unlock', Date.now());
-            appLockOverlay.style.display = 'none';
-            passcodeInput.value = '';
-        } else {
-            passcodeError.style.display = 'block';
-            passcodeInput.classList.add('is-invalid');
-            setTimeout(() => passcodeInput.classList.remove('is-invalid'), 1000);
-        }
+        const enteredPasscode = passcodeInput.value; 
+        const lockData = getLockData(); 
+        passcodeError.style.display = 'none'; 
+        if (enteredPasscode === lockData.passcode) { 
+            localStorage.setItem('app_last_unlock', Date.now()); 
+            appLockOverlay.style.display = 'none'; 
+            passcodeInput.value = ''; 
+        } else { 
+            passcodeError.style.display = 'block'; 
+            passcodeInput.classList.add('is-invalid'); 
+            setTimeout(() => passcodeInput.classList.remove('is-invalid'), 1000); 
+        } 
     } finally {
         hideSpinner();
     }
@@ -2549,7 +2539,7 @@ const scrollThreshold = 200; // The button will appear if scrolled up more than 
 const checkScrollPosition = (chatBox) => {
     if (!chatBox) return;
     const isScrolledUp = (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) > scrollThreshold;
-
+    
     if (isScrolledUp) {
         scrollToBottomBtn.classList.add('visible');
     } else {
